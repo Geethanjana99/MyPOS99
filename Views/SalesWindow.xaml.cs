@@ -183,11 +183,19 @@ namespace MyPOS99.Views
 
                 try
                 {
-                    // Process the sale (this will show success message)
-                    _viewModel.ProcessSaleCommand.Execute(null);
+                    // Process the sale and wait for it to complete
+                    await _viewModel.ProcessSaleAsync();
 
-                    // Wait for sale to complete and data to reload
-                    await Task.Delay(1000);
+                    // Additional wait to ensure UI is fully updated
+                    await Task.Delay(300);
+
+                    // Verify that recent sales were loaded
+                    if (_viewModel.RecentSales.Count == 0)
+                    {
+                        MessageBox.Show("Sale was processed but receipt cannot be generated at this time.", 
+                            "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
 
                     // Ask if user wants to print
                     var result = MessageBox.Show(
@@ -205,8 +213,8 @@ namespace MyPOS99.Views
                         }
                         else
                         {
-                            MessageBox.Show("No recent sale to print.", "Info",
-                                MessageBoxButton.OK, MessageBoxImage.Information);
+                            MessageBox.Show("Unable to print receipt. Please try from Recent Sales list.", 
+                                "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                     }
                 }

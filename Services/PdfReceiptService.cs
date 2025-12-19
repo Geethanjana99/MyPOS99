@@ -35,145 +35,126 @@ namespace MyPOS99.Services
                 {
                     container.Page(page =>
                     {
-                        page.Size(PageSizes.A4);
-                        page.Margin(2, Unit.Centimetre);
+                        // 80mm thermal printer paper (3.15 inches width)
+                        page.Size(new PageSize(226, 800)); // 80mm width, dynamic height
+                        page.Margin(8); // Small margins for thermal printers
                         page.PageColor(Colors.White);
-                        page.DefaultTextStyle(x => x.FontSize(12));
+                        page.DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Black));
 
                     page.Header()
-                        .PaddingVertical(20)
+                        .PaddingBottom(5)
                         .Column(column =>
                         {
                             column.Item().AlignCenter().Text("MyPOS99")
-                                .FontSize(24).Bold().FontColor(Colors.Blue.Darken2);
+                                .FontSize(14).Bold().FontColor(Colors.Black);
                             column.Item().AlignCenter().Text("Point of Sale System")
-                                .FontSize(12).FontColor(Colors.Grey.Darken1);
+                                .FontSize(8).FontColor(Colors.Black);
+                            column.Item().PaddingTop(2).LineHorizontal(1).LineColor(Colors.Black);
                         });
 
                     page.Content()
-                        .Padding(20)
+                        .PaddingVertical(5)
                         .Column(column =>
                         {
-                            // Receipt Header
-                            column.Item().Row(row =>
+                            // Receipt Header Info
+                            column.Item().Text($"Invoice: {sale.InvoiceNumber}").FontSize(8).Bold();
+                            column.Item().Text($"Date: {sale.Date:dd/MM/yyyy HH:mm}").FontSize(7);
+                            column.Item().Text($"Cashier: {cashierName}").FontSize(7);
+                            column.Item().Text($"Customer: {customerName}").FontSize(7);
+
+                            column.Item().PaddingVertical(3).LineHorizontal(1).LineColor(Colors.Black);
+
+                            // Items - Simple list format for thermal printer
+                            foreach (var item in items)
                             {
-                                row.RelativeItem().Column(col =>
+                                column.Item().PaddingBottom(2).Column(itemCol =>
                                 {
-                                    col.Item().Text($"Invoice: {sale.InvoiceNumber}").Bold().FontSize(14);
-                                    col.Item().Text($"Date: {sale.Date:yyyy-MM-dd HH:mm:ss}");
-                                    col.Item().Text($"Cashier: {cashierName}");
-                                    col.Item().Text($"Customer: {customerName}");
-                                });
-                            });
+                                    // Product name
+                                    itemCol.Item().Text(item.ProductName).FontSize(8).Bold();
 
-                            column.Item().PaddingVertical(20).LineHorizontal(1).LineColor(Colors.Grey.Medium);
-
-                            // Items Table
-                            column.Item().Table(table =>
-                            {
-                                table.ColumnsDefinition(columns =>
-                                {
-                                    columns.RelativeColumn(4); // Product - wider
-                                    columns.ConstantColumn(40); // Qty - fixed
-                                    columns.ConstantColumn(70); // Price - fixed
-                                    columns.ConstantColumn(70); // Discount - fixed
-                                    columns.ConstantColumn(80); // Total - fixed
-                                });
-
-                                // Header
-                                table.Header(header =>
-                                {
-                                    header.Cell().Element(CellStyle).Text("Product").FontSize(11).Bold();
-                                    header.Cell().Element(CellStyle).AlignCenter().Text("Qty").FontSize(11).Bold();
-                                    header.Cell().Element(CellStyle).AlignRight().Text("Price").FontSize(11).Bold();
-                                    header.Cell().Element(CellStyle).AlignRight().Text("Disc").FontSize(11).Bold();
-                                    header.Cell().Element(CellStyle).AlignRight().Text("Total").FontSize(11).Bold();
-
-                                    static IContainer CellStyle(IContainer container)
+                                    // Quantity x Price = Total
+                                    itemCol.Item().Row(row =>
                                     {
-                                        return container.BorderBottom(1).BorderColor(Colors.Grey.Medium).Padding(5);
+                                        row.RelativeItem().Text($"{item.Qty} x Rs.{item.Price:N2}").FontSize(7);
+                                        row.ConstantItem(50).AlignRight().Text($"Rs. {item.Total:N2}").FontSize(8).Bold();
+                                    });
+
+                                    // Discount if any
+                                    if (item.Discount > 0)
+                                    {
+                                        itemCol.Item().Row(row =>
+                                        {
+                                            row.RelativeItem().Text($"  Discount").FontSize(6);
+                                            row.ConstantItem(50).AlignRight().Text($"-Rs. {item.Discount * item.Qty:N2}").FontSize(7);
+                                        });
                                     }
                                 });
+                            }
 
-                                // Items
-                                foreach (var item in items)
-                                {
-                                    table.Cell().Element(CellStyle).Text(item.ProductName).FontSize(10);
-                                    table.Cell().Element(CellStyle).AlignCenter().Text(item.Qty.ToString()).FontSize(10);
-                                    table.Cell().Element(CellStyle).AlignRight().Text($"{item.Price:N2}").FontSize(10);
-                                    table.Cell().Element(CellStyle).AlignRight().Text($"{item.Discount:N2}").FontSize(10);
-                                    table.Cell().Element(CellStyle).AlignRight().Text($"{item.Total:N2}").FontSize(10);
-
-                                    static IContainer CellStyle(IContainer container)
-                                    {
-                                        return container.BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(5);
-                                    }
-                                }
-                            });
-
-                            column.Item().PaddingVertical(15);
+                            column.Item().PaddingTop(2).LineHorizontal(1).LineColor(Colors.Black);
 
                             // Totals
-                            column.Item().AlignRight().Column(col =>
+                            column.Item().PaddingTop(3).Row(row =>
                             {
-                                col.Item().PaddingTop(10);
-
-                                col.Item().Row(row =>
-                                {
-                                    row.ConstantItem(100).Text("Sub Total:").FontSize(11);
-                                    row.ConstantItem(100).AlignRight().Text($"Rs. {sale.SubTotal:N2}").FontSize(11);
-                                });
-
-                                col.Item().Row(row =>
-                                {
-                                    row.ConstantItem(100).Text("Discount:").FontSize(11).FontColor(Colors.Red.Medium);
-                                    row.ConstantItem(100).AlignRight().Text($"- Rs. {sale.Discount:N2}").FontSize(11).FontColor(Colors.Red.Medium);
-                                });
-
-                                col.Item().Row(row =>
-                                {
-                                    row.ConstantItem(100).Text("Tax:").FontSize(11);
-                                    row.ConstantItem(100).AlignRight().Text($"Rs. {sale.Tax:N2}").FontSize(11);
-                                });
-
-                                col.Item().PaddingVertical(5).LineHorizontal(2).LineColor(Colors.Grey.Darken1);
-
-                                col.Item().Row(row =>
-                                {
-                                    row.ConstantItem(100).Text("GRAND TOTAL:").Bold().FontSize(14).FontColor(Colors.Green.Darken1);
-                                    row.ConstantItem(100).AlignRight().Text($"Rs. {sale.Total:N2}").Bold().FontSize(14).FontColor(Colors.Green.Darken1);
-                                });
-
-                                col.Item().PaddingTop(10);
-
-                                col.Item().Row(row =>
-                                {
-                                    row.ConstantItem(100).Text("Payment:").FontSize(11);
-                                    row.ConstantItem(100).AlignRight().Text(sale.PaymentType).FontSize(11).Bold();
-                                });
-
-                                col.Item().Row(row =>
-                                {
-                                    row.ConstantItem(100).Text("Amount Paid:").FontSize(11);
-                                    row.ConstantItem(100).AlignRight().Text($"Rs. {sale.AmountPaid:N2}").FontSize(11);
-                                });
-
-                                col.Item().Row(row =>
-                                {
-                                    row.ConstantItem(100).Text("Change:").FontSize(11).FontColor(Colors.Blue.Medium);
-                                    row.ConstantItem(100).AlignRight().Text($"Rs. {sale.Change:N2}").FontSize(11).Bold().FontColor(Colors.Blue.Medium);
-                                });
+                                row.RelativeItem().Text("Sub Total:").FontSize(8);
+                                row.ConstantItem(60).AlignRight().Text($"Rs. {sale.SubTotal:N2}").FontSize(8);
                             });
+
+                            if (sale.Discount > 0)
+                            {
+                                column.Item().Row(row =>
+                                {
+                                    row.RelativeItem().Text("Discount:").FontSize(8);
+                                    row.ConstantItem(60).AlignRight().Text($"-Rs. {sale.Discount:N2}").FontSize(8);
+                                });
+                            }
+
+                            if (sale.Tax > 0)
+                            {
+                                column.Item().Row(row =>
+                                {
+                                    row.RelativeItem().Text("Tax:").FontSize(8);
+                                    row.ConstantItem(60).AlignRight().Text($"Rs. {sale.Tax:N2}").FontSize(8);
+                                });
+                            }
+
+                            column.Item().PaddingVertical(2).LineHorizontal(1).LineColor(Colors.Black);
+
+                            // Grand Total
+                            column.Item().Row(row =>
+                            {
+                                row.RelativeItem().Text("TOTAL:").FontSize(10).Bold();
+                                row.ConstantItem(60).AlignRight().Text($"Rs. {sale.Total:N2}").FontSize(10).Bold();
+                            });
+
+                            column.Item().PaddingTop(3).LineHorizontal(1).LineColor(Colors.Black);
+
+                            // Payment Info
+                            column.Item().PaddingTop(2).Row(row =>
+                            {
+                                row.RelativeItem().Text($"Payment: {sale.PaymentType}").FontSize(7);
+                                row.ConstantItem(60).AlignRight().Text($"Rs. {sale.AmountPaid:N2}").FontSize(7);
+                            });
+
+                            if (sale.Change > 0)
+                            {
+                                column.Item().Row(row =>
+                                {
+                                    row.RelativeItem().Text("Change:").FontSize(8);
+                                    row.ConstantItem(60).AlignRight().Text($"Rs. {sale.Change:N2}").FontSize(8).Bold();
+                                });
+                            }
                         });
 
                     page.Footer()
-                        .PaddingVertical(10)
+                        .PaddingTop(5)
                         .Column(column =>
                         {
-                            column.Item().AlignCenter().Text("Thank you for your purchase!")
-                                .FontSize(12).Bold().FontColor(Colors.Blue.Darken1);
-                            column.Item().AlignCenter().Text("Please come again!")
-                                .FontSize(10).FontColor(Colors.Grey.Darken1);
+                            column.Item().LineHorizontal(1).LineColor(Colors.Black);
+                            column.Item().PaddingTop(3).AlignCenter().Text("Thank you!")
+                                .FontSize(8).Bold();
+                            column.Item().AlignCenter().Text("Please come again")
+                                .FontSize(7);
                         });
                 });
                 })

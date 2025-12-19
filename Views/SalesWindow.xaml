@@ -305,7 +305,7 @@
                                     </Grid>
 
                                     <Grid Margin="0,0,0,10">
-                                        <TextBlock Text="Discount:" FontSize="14" Foreground="#E74C3C"/>
+                                        <TextBlock Text="Total Discount:" FontSize="14" Foreground="#E74C3C"/>
                                         <TextBlock Text="{Binding TotalDiscountFormatted}" FontSize="14" 
                                                    FontWeight="SemiBold" Foreground="#E74C3C" HorizontalAlignment="Right"/>
                                     </Grid>
@@ -396,27 +396,15 @@
                             </Grid>
                         </Border>
 
-                    <!-- Action Buttons -->
-                    <StackPanel Grid.Row="2" Margin="0,20,0,0">
-                        <Button Content="Process Sale" Command="{Binding ProcessSaleCommand}" 
-                                Style="{StaticResource SuccessButton}" Height="60" FontSize="18" Margin="0,0,0,10"/>
-                        
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="10"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                        <!-- Action Buttons -->
+                        <StackPanel Grid.Row="2" Margin="0,20,0,0">
+                            <Button Content="Process Sale" Command="{Binding ProcessSaleCommand}" 
+                                    Style="{StaticResource SuccessButton}" Height="60" FontSize="18" Margin="0,0,0,10"/>
 
                             <Button Content="New Sale" Command="{Binding NewSaleCommand}" 
-                                    Style="{StaticResource POSButton}"/>
-                            
-                            <Button Grid.Column="2" Content="Print" Command="{Binding PrintReceiptCommand}" 
-                                    Background="#9B59B6" Foreground="White" 
-                                    Style="{StaticResource POSButton}"/>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Grid>
+                                    Style="{StaticResource POSButton}" Height="50" FontSize="16"/>
+                        </StackPanel>
+                    </Grid>
                                     </ScrollViewer>
                                     </Border>
                                 </Grid>

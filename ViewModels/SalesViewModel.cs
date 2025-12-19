@@ -327,6 +327,9 @@ namespace MyPOS99.ViewModels
                     // Update existing item
                     existingItem.Quantity += quantity;
                     existingItem.Discount = discount;
+
+                    // Manually trigger totals recalculation since CollectionChanged won't fire
+                    CalculateTotals();
                 }
                 else
                 {
@@ -368,6 +371,7 @@ namespace MyPOS99.ViewModels
                 if (SelectedCartItem.Quantity < SelectedCartItem.AvailableStock)
                 {
                     SelectedCartItem.Quantity++;
+                    CalculateTotals(); // Recalculate totals after quantity change
                 }
                 else
                 {
@@ -382,14 +386,22 @@ namespace MyPOS99.ViewModels
             if (SelectedCartItem != null && SelectedCartItem.Quantity > 1)
             {
                 SelectedCartItem.Quantity--;
+                CalculateTotals(); // Recalculate totals after quantity change
             }
         }
 
         private void CalculateTotals()
         {
-            SubTotal = CartItems.Sum(x => x.LineTotal);
+            // Calculate subtotal BEFORE any discounts (Price * Quantity for all items)
+            SubTotal = CartItems.Sum(x => x.Price * x.Quantity);
+
+            // Calculate total discount (item discounts + global discount)
             TotalDiscount = CartItems.Sum(x => x.TotalDiscount) + GlobalDiscount;
+
+            // Tax on subtotal (before discount)
             Tax = SubTotal * 0; // Set tax rate if needed (e.g., 0.12 for 12%)
+
+            // Grand total = SubTotal - Discounts + Tax
             GrandTotal = SubTotal - TotalDiscount + Tax;
 
             OnPropertyChanged(nameof(SubTotalFormatted));
@@ -408,7 +420,7 @@ namespace MyPOS99.ViewModels
             OnPropertyChanged(nameof(ChangeFormatted));
         }
 
-        private async Task ProcessSaleAsync()
+        public async Task ProcessSaleAsync()
         {
             if (CartItems.Count == 0)
             {
@@ -811,7 +823,7 @@ namespace MyPOS99.ViewModels
 
         private bool CanPrintReceipt()
         {
-            return CartItems.Count > 0;
+            return RecentSales.Count > 0;
         }
 
         #endregion
@@ -836,6 +848,7 @@ namespace MyPOS99.ViewModels
                 if (SetProperty(ref _quantity, value))
                 {
                     OnPropertyChanged(nameof(LineTotal));
+                    OnPropertyChanged(nameof(LineTotalFormatted));
                     OnPropertyChanged(nameof(TotalDiscount));
                 }
             }
@@ -849,6 +862,7 @@ namespace MyPOS99.ViewModels
                 if (SetProperty(ref _discount, value))
                 {
                     OnPropertyChanged(nameof(LineTotal));
+                    OnPropertyChanged(nameof(LineTotalFormatted));
                     OnPropertyChanged(nameof(TotalDiscount));
                 }
             }
