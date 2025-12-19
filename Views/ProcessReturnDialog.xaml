@@ -1,0 +1,165 @@
+<Window x:Class="MyPOS99.Views.ProcessReturnDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Process Return" Height="600" Width="700"
+        WindowStartupLocation="CenterOwner"
+        Background="#F5F5F5">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2C3E50" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+            <TextBlock Text="Process Return" FontSize="20" FontWeight="Bold" Foreground="White"/>
+        </Border>
+
+        <!-- Sale Info -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Invoice:" FontWeight="SemiBold" Margin="0,0,10,10"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="InvoiceNumberText" Text="" Foreground="#3498DB" Margin="0,0,10,10"/>
+
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Date:" FontWeight="SemiBold" Margin="0,0,10,10"/>
+                <TextBlock Grid.Row="0" Grid.Column="3" x:Name="SaleDateText" Text="" Margin="0,0,0,10"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Total:" FontWeight="SemiBold" Margin="0,0,10,10"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="SaleTotalText" Text="" FontWeight="Bold" Foreground="#27AE60" Margin="0,0,10,10"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Reason:" FontWeight="SemiBold" Margin="0,5,10,0"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" x:Name="ReasonTextBox" 
+                         Text="" Padding="8" Margin="0,5,0,0" 
+                         ToolTip="Enter reason for return (e.g., Defective, Wrong item, Customer request)"/>
+            </Grid>
+        </Border>
+
+        <!-- Items List -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Select Items to Return" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+                <ListBox Grid.Row="1" x:Name="ItemsListBox" SelectionMode="Multiple">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="#ECF0F1" BorderThickness="0,0,0,1" Padding="10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold" FontSize="13"/>
+                                        <TextBlock Text="{Binding ProductCode}" FontSize="11" Foreground="#7F8C8D"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Margin="15,0">
+                                        <TextBlock Text="Qty" FontSize="10" Foreground="#7F8C8D"/>
+                                        <TextBlock Text="{Binding Qty}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Margin="15,0">
+                                        <TextBlock Text="Price" FontSize="10" Foreground="#7F8C8D"/>
+                                        <TextBlock Text="{Binding Price, StringFormat=Rs. {0:N2}}" FontWeight="SemiBold"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="3" Margin="15,0,0,0">
+                                        <TextBlock Text="Total" FontSize="10" Foreground="#7F8C8D"/>
+                                        <TextBlock Text="{Binding Total, StringFormat=Rs. {0:N2}}" FontWeight="Bold" Foreground="#27AE60"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- Return Summary -->
+        <Border Grid.Row="3" Background="#E8F5E9" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+            <Grid>
+                <TextBlock Text="Return Amount:" FontSize="14" FontWeight="SemiBold"/>
+                <TextBlock x:Name="ReturnAmountText" Text="Rs. 0.00" FontSize="18" 
+                          FontWeight="Bold" Foreground="#27AE60" HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Content="Cancel" Click="CancelButton_Click"
+                    Background="#95A5A6" Foreground="White" Padding="15,12"
+                    FontSize="14" FontWeight="SemiBold" BorderThickness="0" Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#7F8C8D"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <Button Grid.Column="2" Content="Process Return" Click="ProcessReturnButton_Click"
+                    Background="#E74C3C" Foreground="White" Padding="15,12"
+                    FontSize="14" FontWeight="SemiBold" BorderThickness="0" Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#C0392B"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

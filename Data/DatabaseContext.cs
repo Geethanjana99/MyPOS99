@@ -280,24 +280,56 @@ namespace MyPOS99.Data
                     FOREIGN KEY (UserId) REFERENCES Users(Id)
                 );
 
-                -- Categories Table (for product categories)
-                CREATE TABLE IF NOT EXISTS Categories (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL UNIQUE,
-                    Description TEXT,
-                    CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
-                );
+                    -- Categories Table (for product categories)
+                    CREATE TABLE IF NOT EXISTS Categories (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Name TEXT NOT NULL UNIQUE,
+                        Description TEXT,
+                        CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+                    );
 
-                -- Create indexes for better performance
-                CREATE INDEX IF NOT EXISTS idx_products_code ON Products(Code);
-                CREATE INDEX IF NOT EXISTS idx_products_barcode ON Products(Barcode);
-                CREATE INDEX IF NOT EXISTS idx_sales_date ON Sales(Date);
-                CREATE INDEX IF NOT EXISTS idx_sales_user ON Sales(UserId);
-                CREATE INDEX IF NOT EXISTS idx_saleitems_sale ON SaleItems(SaleId);
-                CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON Purchases(SupplierId);
-                CREATE INDEX IF NOT EXISTS idx_purchases_date ON Purchases(Date);
-                CREATE INDEX IF NOT EXISTS idx_expenses_date ON Expenses(Date);
-            ";
+                    -- Returns Table
+                    CREATE TABLE IF NOT EXISTS Returns (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ReturnNumber TEXT NOT NULL UNIQUE,
+                        SaleId INTEGER NOT NULL,
+                        OriginalInvoiceNumber TEXT NOT NULL,
+                        ReturnDate TEXT NOT NULL,
+                        TotalAmount REAL NOT NULL,
+                        Reason TEXT,
+                        ProcessedByUserId INTEGER NOT NULL,
+                        Notes TEXT,
+                        CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (SaleId) REFERENCES Sales(Id),
+                        FOREIGN KEY (ProcessedByUserId) REFERENCES Users(Id)
+                    );
+
+                    -- ReturnItems Table
+                    CREATE TABLE IF NOT EXISTS ReturnItems (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ReturnId INTEGER NOT NULL,
+                        ProductId INTEGER NOT NULL,
+                        ProductName TEXT NOT NULL,
+                        Quantity INTEGER NOT NULL,
+                        Price REAL NOT NULL,
+                        Total REAL NOT NULL,
+                        FOREIGN KEY (ReturnId) REFERENCES Returns(Id) ON DELETE CASCADE,
+                        FOREIGN KEY (ProductId) REFERENCES Products(Id)
+                    );
+
+                    -- Create indexes for better performance
+                    CREATE INDEX IF NOT EXISTS idx_products_code ON Products(Code);
+                    CREATE INDEX IF NOT EXISTS idx_products_barcode ON Products(Barcode);
+                    CREATE INDEX IF NOT EXISTS idx_sales_date ON Sales(Date);
+                    CREATE INDEX IF NOT EXISTS idx_sales_user ON Sales(UserId);
+                    CREATE INDEX IF NOT EXISTS idx_saleitems_sale ON SaleItems(SaleId);
+                    CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON Purchases(SupplierId);
+                    CREATE INDEX IF NOT EXISTS idx_purchases_date ON Purchases(Date);
+                    CREATE INDEX IF NOT EXISTS idx_expenses_date ON Expenses(Date);
+                    CREATE INDEX IF NOT EXISTS idx_returns_sale ON Returns(SaleId);
+                    CREATE INDEX IF NOT EXISTS idx_returns_date ON Returns(ReturnDate);
+                    CREATE INDEX IF NOT EXISTS idx_returnitems_return ON ReturnItems(ReturnId);
+                ";
             
             command.ExecuteNonQuery();
 

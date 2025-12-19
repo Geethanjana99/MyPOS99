@@ -226,17 +226,82 @@ namespace MyPOS99.Views
             }
         }
 
-        private void RecentSalesListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is ListBox listBox && listBox.SelectedItem is Sale sale)
-            {
-                _viewModel.ViewInvoiceCommand.Execute(sale);
-            }
-        }
+                private void ViewRecentSalesButton_Click(object sender, RoutedEventArgs e)
+                {
+                    var recentSalesWindow = new RecentSalesWindow(_viewModel.RecentSales);
+                    recentSalesWindow.ShowDialog();
+                }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
-        }
-    }
-}
+                private void ReturnExchangeButton_Click(object sender, RoutedEventArgs e)
+                        {
+                            var dialog = new ReturnExchangeDialog();
+                            if (dialog.ShowDialog() == true)
+                            {
+                                if (dialog.IsCashReturn)
+                                {
+                                    // Cash return - process refund
+                                    var returnAmount = dialog.TotalCredit;
+                                    var returnDiscount = dialog.ReturnDiscount;
+
+                                    // Calculate actual return amount (subtract discount that was given)
+                                    var actualReturnAmount = returnAmount - returnDiscount;
+
+                                    var result = MessageBox.Show(
+                                        $"Cash Return Summary:\n\n" +
+                                        $"Items Total: Rs. {returnAmount:N2}\n" +
+                                        $"Original Discount: Rs. {returnDiscount:N2}\n" +
+                                        $"???????????????????\n" +
+                                        $"Refund Amount: Rs. {actualReturnAmount:N2}\n\n" +
+                                        $"Process cash refund?",
+                                        "Cash Return",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Question);
+
+                                    if (result == MessageBoxResult.Yes)
+                                    {
+                                        MessageBox.Show(
+                                            $"Cash refund processed: Rs. {actualReturnAmount:N2}\n\n" +
+                                            $"Stock has been updated.\n" +
+                                            $"Please give Rs. {actualReturnAmount:N2} to customer.",
+                                            "Refund Processed",
+                                            MessageBoxButton.OK,
+                                            MessageBoxImage.Information);
+                                    }
+                                }
+                                else
+                                {
+                                    // Exchange - add return items to cart as negative prices
+                                    foreach (var item in dialog.ReturnItems)
+                                    {
+                                        // Add as negative quantity (return) to cart
+                                        var cartItem = new ViewModels.CartItem
+                                        {
+                                            ProductId = item.ProductId,
+                                            ProductCode = item.ProductCode,
+                                            ProductName = $"[RETURN] {item.ProductName}",
+                                            Price = -item.Price, // Negative price for return
+                                            Quantity = item.Quantity,
+                                            Discount = 0
+                                        };
+
+                                        _viewModel.CartItems.Add(cartItem);
+                                    }
+
+                                    MessageBox.Show(
+                                        $"Return items added to cart.\n\n" +
+                                        $"Return Credit: Rs. {dialog.TotalCredit:N2}\n\n" +
+                                        $"Now add the new items to purchase.\n" +
+                                        $"The return credit will be deducted from the total.",
+                                        "Exchange - Add New Items",
+                                        MessageBoxButton.OK,
+                                        MessageBoxImage.Information);
+                                }
+                            }
+                        }
+
+                        private void CloseButton_Click(object sender, RoutedEventArgs e)
+                        {
+                            this.Close();
+                        }
+                    }
+                }

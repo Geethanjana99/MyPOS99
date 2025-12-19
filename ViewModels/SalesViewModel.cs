@@ -65,6 +65,7 @@ namespace MyPOS99.ViewModels
             PrintReceiptCommand = new RelayCommand(PrintReceipt, CanPrintReceipt);
             NewSaleCommand = new RelayCommand(NewSale);
             ViewInvoiceCommand = new RelayCommand<Sale>(ViewInvoice);
+            ProcessReturnCommand = new RelayCommand<Sale>(ProcessReturn, CanProcessReturn);
 
                 // Generate invoice number
                 GenerateInvoiceNumber();
@@ -248,6 +249,7 @@ namespace MyPOS99.ViewModels
         public ICommand PrintReceiptCommand { get; }
         public ICommand NewSaleCommand { get; }
         public ICommand ViewInvoiceCommand { get; }
+        public ICommand ProcessReturnCommand { get; }
 
         #endregion
 
@@ -319,8 +321,8 @@ namespace MyPOS99.ViewModels
                     return;
                 }
 
-                // Check if product already in cart
-                var existingItem = CartItems.FirstOrDefault(x => x.ProductId == SelectedProduct.Id);
+                // Check if product already in cart (but not return items)
+                var existingItem = CartItems.FirstOrDefault(x => x.ProductId == SelectedProduct.Id && x.Price > 0);
 
                 if (existingItem != null)
                 {
@@ -523,24 +525,40 @@ namespace MyPOS99.ViewModels
                         itemCommand.Parameters.AddWithValue("@discount", item.Discount);
                         itemCommand.Parameters.AddWithValue("@total", item.Total);
                         
-                        await itemCommand.ExecuteNonQueryAsync();
+                                await itemCommand.ExecuteNonQueryAsync();
 
-                        // Update product stock
-                        var stockCommand = connection.CreateCommand();
-                        stockCommand.Transaction = transaction;
-                        stockCommand.CommandText = @"
-                            UPDATE Products 
-                            SET StockQty = StockQty - @qty, UpdatedAt = @updatedAt
-                            WHERE Id = @productId
-                        ";
-                        
-                        stockCommand.Parameters.AddWithValue("@qty", item.Qty);
-                        stockCommand.Parameters.AddWithValue("@productId", item.ProductId);
-                        stockCommand.Parameters.AddWithValue("@updatedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                        
-                        await stockCommand.ExecuteNonQueryAsync();
-                    }
-                });
+                                // Update product stock
+                                // For return items (negative price), add to stock
+                                // For regular items (positive price), subtract from stock
+                                var stockCommand = connection.CreateCommand();
+                                stockCommand.Transaction = transaction;
+
+                                if (item.Price < 0)
+                                {
+                                    // Return item - add back to stock
+                                    stockCommand.CommandText = @"
+                                        UPDATE Products 
+                                        SET StockQty = StockQty + @qty, UpdatedAt = @updatedAt
+                                        WHERE Id = @productId
+                                    ";
+                                }
+                                else
+                                {
+                                    // Regular item - subtract from stock
+                                    stockCommand.CommandText = @"
+                                        UPDATE Products 
+                                        SET StockQty = StockQty - @qty, UpdatedAt = @updatedAt
+                                        WHERE Id = @productId
+                                    ";
+                                }
+
+                                stockCommand.Parameters.AddWithValue("@qty", item.Qty);
+                                stockCommand.Parameters.AddWithValue("@productId", item.ProductId);
+                                stockCommand.Parameters.AddWithValue("@updatedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                                await stockCommand.ExecuteNonQueryAsync();
+                            }
+                        });
 
                 if (success)
                 {
@@ -705,27 +723,99 @@ namespace MyPOS99.ViewModels
                                         MessageBoxButton.OK, MessageBoxImage.Information);
                                 }
                             }
-                            catch (Exception ex)
+                                            catch (Exception ex)
+                                            {
+                                                MessageBox.Show($"Error opening invoice: {ex.Message}\n\nDetails: {ex.StackTrace}", "Error",
+                                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                                            }
+                                        }
+
+                            private async void ProcessReturn(Sale? sale)
                             {
-                                MessageBox.Show($"Error opening invoice: {ex.Message}\n\nDetails: {ex.StackTrace}", "Error",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                                if (sale == null) return;
+
+                                try
+                                {
+                                    // Get sale items
+                                    var items = GetSaleItems(sale.Id);
+
+                                    if (items.Count == 0)
+                                    {
+                                        MessageBox.Show("No items found for this sale.", "Error",
+                                            MessageBoxButton.OK, MessageBoxImage.Error);
+                                        return;
+                                    }
+
+                                    // Show return dialog
+                                    var returnDialog = new Views.ProcessReturnDialog(sale, items);
+                                    if (returnDialog.ShowDialog() == true)
+                                    {
+                                        // Generate return number
+                                        var returnNumber = $"RET-{DateTime.Now:yyyyMMdd}-{DateTime.Now:HHmmss}";
+
+                                        // Create return record
+                                        var returnRecord = new Return
+                                        {
+                                            ReturnNumber = returnNumber,
+                                            SaleId = sale.Id,
+                                            OriginalInvoiceNumber = sale.InvoiceNumber,
+                                            ReturnDate = DateTime.Now,
+                                            TotalAmount = returnDialog.ReturnAmount,
+                                            Reason = returnDialog.ReturnReason,
+                                            ProcessedByUserId = ((App)Application.Current).CurrentUser?.Id ?? 1,
+                                            Notes = $"Returned {returnDialog.SelectedItemsToReturn.Count} item(s)"
+                                        };
+
+                                        // Create return items
+                                        var returnItems = returnDialog.SelectedItemsToReturn.Select(item => new ReturnItem
+                                        {
+                                            ProductId = item.ProductId,
+                                            ProductName = item.ProductName,
+                                            Quantity = item.Qty,
+                                            Price = item.Price,
+                                            Total = item.Total
+                                        }).ToList();
+
+                                        // Process return
+                                        var returnService = new ReturnService();
+                                        await returnService.CreateReturnAsync(returnRecord, returnItems);
+
+                                        // Reload data
+                                        await LoadRecentSalesAsync();
+                                        await LoadTodaysTotalSalesAsync();
+
+                                        MessageBox.Show(
+                                            $"Return processed successfully!\n\n" +
+                                            $"Return Number: {returnNumber}\n" +
+                                            $"Amount: Rs. {returnDialog.ReturnAmount:N2}\n\n" +
+                                            $"Items have been added back to stock.\n" +
+                                            $"Sales total has been adjusted.",
+                                            "Return Successful",
+                                            MessageBoxButton.OK,
+                                            MessageBoxImage.Information);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageBox.Show($"Error processing return: {ex.Message}\n\nDetails: {ex.StackTrace}",
+                                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                }
                             }
-                        }
 
-        private void NewSale()
-        {
-            CartItems.Clear();
-            SearchText = string.Empty;
-            SearchResults.Clear();
-            SelectedProduct = null;
-            SelectedCartItem = null;
-            AmountPaid = 0;
-            GlobalDiscount = 0;
-            CustomerName = "Walk-in Customer";
-            Notes = string.Empty;
-            PaymentType = "Cash";
+                            private void NewSale()
+                            {
+                                CartItems.Clear();
+                                SearchText = string.Empty;
+                                SearchResults.Clear();
+                                SelectedProduct = null;
+                                SelectedCartItem = null;
+                                AmountPaid = 0;
+                                GlobalDiscount = 0;
+                                CustomerName = "Walk-in Customer";
+                                Notes = string.Empty;
+                                PaymentType = "Cash";
 
-            GenerateInvoiceNumber();
+                                GenerateInvoiceNumber();
         }
 
         private void GenerateInvoiceNumber()
@@ -826,6 +916,11 @@ namespace MyPOS99.ViewModels
             return RecentSales.Count > 0;
         }
 
+        private bool CanProcessReturn(Sale? sale)
+        {
+            return sale != null;
+        }
+
         #endregion
     }
 
@@ -869,6 +964,12 @@ namespace MyPOS99.ViewModels
         }
 
         public int AvailableStock { get; set; }
+
+        // Identify if this is a return item (negative price)
+        public bool IsReturnItem => Price < 0;
+
+        // Background color for UI styling
+        public string BackgroundColor => IsReturnItem ? "#FFCCCB" : "Transparent";
 
                 public decimal TotalDiscount => Discount * Quantity;
                 public decimal LineTotal => (Price * Quantity) - TotalDiscount;
