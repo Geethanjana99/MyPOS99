@@ -1,0 +1,23 @@
+﻿<Application x:Class="MyPOS99.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MyPOS99"
+             xmlns:converters="clr-namespace:MyPOS99.Converters"
+             StartupUri="Views/LoginWindow.xaml">
+    <Application.Resources>
+        <!-- Converters -->
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+        <converters:BoolToFormTitleConverter x:Key="BoolToFormTitleConverter"/>
+        <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+        <converters:BoolToStockStatusConverter x:Key="BoolToStockStatusConverter"/>
+        
+        <!-- Add your global styles and resources here -->
+        <SolidColorBrush x:Key="PrimaryColor" Color="#2C3E50"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#3498DB"/>
+        <SolidColorBrush x:Key="BackgroundColor" Color="#ECF0F1"/>
+        <SolidColorBrush x:Key="TextColor" Color="#2C3E50"/>
+    </Application.Resources>
+</Application>
