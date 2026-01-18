@@ -11,10 +11,12 @@ namespace MyPOS99.ViewModels
     {
         private readonly ProductService _productService;
         private readonly CategoryService _categoryService;
+        private readonly SupplierService _supplierService;
         private readonly DatabaseService _db;
-        
+
         private ObservableCollection<Product> _products;
         private ObservableCollection<string> _categories;
+        private ObservableCollection<Supplier> _suppliers;
         private Product? _selectedProduct;
         private string _searchText = string.Empty;
         private bool _isEditMode;
@@ -30,29 +32,42 @@ namespace MyPOS99.ViewModels
         private int _stockQty;
         private int _minStockLevel;
         private string? _barcode;
+        private Supplier? _selectedSupplier;
 
         public ProductViewModel(DatabaseService databaseService)
         {
-            _db = databaseService;
-            var dbContext = new DatabaseContext();
-            _productService = new ProductService(dbContext);
-            _categoryService = new CategoryService(databaseService);
-            
-            _products = new ObservableCollection<Product>();
-            _categories = new ObservableCollection<string>();
+            try
+            {
+                _db = databaseService;
+                var dbContext = new DatabaseContext();
+                _productService = new ProductService(dbContext);
+                _categoryService = new CategoryService(databaseService);
+                _supplierService = new SupplierService(_db);
 
-            // Initialize commands
-            AddCommand = new RelayCommand(AddProduct);
-            EditCommand = new RelayCommand(EditProduct, CanEditProduct);
-            SaveCommand = new RelayCommand(async () => await SaveProductAsync(), CanSaveProduct);
-            DeleteCommand = new RelayCommand(async () => await DeleteProductAsync(), CanEditProduct);
-            CancelCommand = new RelayCommand(CancelEdit);
-            SearchCommand = new RelayCommand(async () => await SearchProductsAsync());
-            RefreshCommand = new RelayCommand(async () => await LoadProductsAsync());
+                _products = new ObservableCollection<Product>();
+                _categories = new ObservableCollection<string>();
+                _suppliers = new ObservableCollection<Supplier>();
 
-            // Load data
-            _ = LoadProductsAsync();
-            _ = LoadCategoriesAsync();
+                // Initialize commands
+                AddCommand = new RelayCommand(AddProduct);
+                EditCommand = new RelayCommand(EditProduct, CanEditProduct);
+                SaveCommand = new RelayCommand(async () => await SaveProductAsync(), CanSaveProduct);
+                DeleteCommand = new RelayCommand(async () => await DeleteProductAsync(), CanEditProduct);
+                CancelCommand = new RelayCommand(CancelEdit);
+                SearchCommand = new RelayCommand(async () => await SearchProductsAsync());
+                RefreshCommand = new RelayCommand(async () => await LoadProductsAsync());
+
+                // Load data
+                _ = LoadProductsAsync();
+                _ = LoadCategoriesAsync();
+                _ = LoadSuppliersAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error in ProductViewModel constructor:\n\n{ex.Message}\n\nStack:\n{ex.StackTrace}", 
+                    "ViewModel Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw;
+            }
         }
 
         #region Properties
@@ -67,6 +82,12 @@ namespace MyPOS99.ViewModels
         {
             get => _categories;
             set => SetProperty(ref _categories, value);
+        }
+
+        public ObservableCollection<Supplier> Suppliers
+        {
+            get => _suppliers;
+            set => SetProperty(ref _suppliers, value);
         }
 
         public Product? SelectedProduct
@@ -176,6 +197,12 @@ namespace MyPOS99.ViewModels
             set => SetProperty(ref _barcode, value);
         }
 
+        public Supplier? SelectedSupplier
+        {
+            get => _selectedSupplier;
+            set => SetProperty(ref _selectedSupplier, value);
+        }
+
         public decimal ProfitMargin
         {
             get
@@ -242,12 +269,31 @@ namespace MyPOS99.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading categories: {ex.Message}", "Error",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+                        MessageBox.Show($"Error loading categories: {ex.Message}", "Error",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
 
-        private void AddProduct()
+                private async Task LoadSuppliersAsync()
+                {
+                    try
+                    {
+                        var suppliers = await _supplierService.GetAllSuppliersAsync();
+
+                        Suppliers.Clear();
+                        foreach (var supplier in suppliers)
+                        {
+                            Suppliers.Add(supplier);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error loading suppliers: {ex.Message}", "Error",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+
+                private void AddProduct()
         {
             ClearForm();
             IsEditMode = true;
@@ -266,7 +312,10 @@ namespace MyPOS99.ViewModels
                 StockQty = SelectedProduct.StockQty;
                 MinStockLevel = SelectedProduct.MinStockLevel;
                 Barcode = SelectedProduct.Barcode;
-                
+                SelectedSupplier = SelectedProduct.SupplierId.HasValue 
+                    ? Suppliers.FirstOrDefault(s => s.Id == SelectedProduct.SupplierId.Value) 
+                    : null;
+
                 IsEditMode = true;
             }
         }
@@ -286,7 +335,8 @@ namespace MyPOS99.ViewModels
                     SellPrice = SellPrice,
                     StockQty = StockQty,
                     MinStockLevel = MinStockLevel,
-                    Barcode = Barcode
+                    Barcode = Barcode,
+                    SupplierId = SelectedSupplier?.Id
                 };
 
                 bool success;
@@ -399,12 +449,15 @@ namespace MyPOS99.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 const string query = @"
-                    SELECT Id, Code, Name, Category, CostPrice, SellPrice, StockQty, MinStockLevel, Barcode, CreatedAt, UpdatedAt
-                    FROM Products
-                    WHERE Code LIKE @search OR Name LIKE @search OR Category LIKE @search OR Barcode LIKE @search
-                    ORDER BY Name
+                    SELECT p.Id, p.Code, p.Name, p.Category, p.CostPrice, p.SellPrice, 
+                           p.StockQty, p.MinStockLevel, p.Barcode, p.SupplierId, 
+                           p.CreatedAt, p.UpdatedAt, s.Name as SupplierName
+                    FROM Products p
+                    LEFT JOIN Suppliers s ON p.SupplierId = s.Id
+                    WHERE p.Code LIKE @search OR p.Name LIKE @search OR p.Category LIKE @search OR p.Barcode LIKE @search
+                    ORDER BY p.Name
                 ";
 
                 var products = await _db.ExecuteQueryAsync(query, reader => new Product
@@ -418,8 +471,10 @@ namespace MyPOS99.ViewModels
                     StockQty = reader.GetInt32(6),
                     MinStockLevel = reader.GetInt32(7),
                     Barcode = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    CreatedAt = DateTime.Parse(reader.GetString(9)),
-                    UpdatedAt = DateTime.Parse(reader.GetString(10))
+                    SupplierId = reader.IsDBNull(9) ? null : reader.GetInt32(9),
+                    CreatedAt = DateTime.Parse(reader.GetString(10)),
+                    UpdatedAt = DateTime.Parse(reader.GetString(11)),
+                    Supplier = reader.IsDBNull(12) ? null : new Supplier { Name = reader.GetString(12) }
                 }, DatabaseService.CreateParameter("@search", $"%{SearchText}%"));
 
                 Products.Clear();
@@ -450,6 +505,7 @@ namespace MyPOS99.ViewModels
             StockQty = 0;
             MinStockLevel = 0;
             Barcode = null;
+            SelectedSupplier = null;
         }
 
         private bool CanSaveProduct()

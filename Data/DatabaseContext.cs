@@ -150,7 +150,7 @@ namespace MyPOS99.Data
         {
             using var connection = OpenConnection();
             using var command = connection.CreateCommand();
-            
+
             command.CommandText = @"
                 -- Users Table
                 CREATE TABLE IF NOT EXISTS Users (
@@ -173,8 +173,10 @@ namespace MyPOS99.Data
                     StockQty INTEGER DEFAULT 0,
                     MinStockLevel INTEGER DEFAULT 0,
                     Barcode TEXT,
+                    SupplierId INTEGER,
                     CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
-                    UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+                    UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (SupplierId) REFERENCES Suppliers(Id)
                 );
 
                 -- Suppliers Table
@@ -196,6 +198,9 @@ namespace MyPOS99.Data
                     Email TEXT,
                     Address TEXT,
                     TotalPurchases REAL DEFAULT 0,
+                    CreditLimit REAL DEFAULT 0,
+                    CurrentCredit REAL DEFAULT 0,
+                    IsCreditCustomer INTEGER DEFAULT 0,
                     CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
                     IsActive INTEGER DEFAULT 1
                 );
@@ -333,6 +338,12 @@ namespace MyPOS99.Data
             
             command.ExecuteNonQuery();
 
+            // Migrate existing Customers table to add new columns if they don't exist
+            MigrateCustomersTable(connection);
+
+            // Migrate existing Products table to add SupplierId column if it doesn't exist
+            MigrateProductsTable(connection);
+
             // Insert default admin user with BCrypt hashed password (password: admin123)
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword("admin123");
             var insertCommand = connection.CreateCommand();
@@ -341,9 +352,110 @@ namespace MyPOS99.Data
                 VALUES (1, 'admin', @passwordHash, 'Admin')
             ";
             insertCommand.Parameters.AddWithValue("@passwordHash", hashedPassword);
-            insertCommand.ExecuteNonQuery();
-        }
-    }
+                insertCommand.ExecuteNonQuery();
+
+                // Insert default Walk-in Customer (after migration to ensure columns exist)
+                try
+                {
+                    var insertCustomerCommand = connection.CreateCommand();
+                    insertCustomerCommand.CommandText = @"
+                        INSERT OR IGNORE INTO Customers (Id, Name, Phone, Email, Address, CreditLimit, CurrentCredit, IsCreditCustomer, IsActive) 
+                        VALUES (1, 'Walk-in Customer', NULL, NULL, NULL, 0, 0, 0, 1)
+                    ";
+                    insertCustomerCommand.ExecuteNonQuery();
+                }
+                catch (Exception)
+                {
+                    // If the full insert fails (old schema), try basic insert
+                    var basicInsertCommand = connection.CreateCommand();
+                    basicInsertCommand.CommandText = @"
+                        INSERT OR IGNORE INTO Customers (Id, Name, IsActive) 
+                        VALUES (1, 'Walk-in Customer', 1)
+                    ";
+                    basicInsertCommand.ExecuteNonQuery();
+                }
+            }
+
+            private void MigrateCustomersTable(SqliteConnection connection)
+            {
+                try
+                {
+                    // Check if new columns exist and add them if they don't
+                    var columnCheckCommand = connection.CreateCommand();
+                    columnCheckCommand.CommandText = "PRAGMA table_info(Customers)";
+
+                    var existingColumns = new HashSet<string>();
+                    using (var reader = columnCheckCommand.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            existingColumns.Add(reader.GetString(1).ToLower()); // Column name is at index 1
+                        }
+                    }
+
+                    // Add CreditLimit column if it doesn't exist
+                    if (!existingColumns.Contains("creditlimit"))
+                    {
+                        var addColumnCommand = connection.CreateCommand();
+                        addColumnCommand.CommandText = "ALTER TABLE Customers ADD COLUMN CreditLimit REAL DEFAULT 0";
+                        addColumnCommand.ExecuteNonQuery();
+                    }
+
+                    // Add CurrentCredit column if it doesn't exist
+                    if (!existingColumns.Contains("currentcredit"))
+                    {
+                        var addColumnCommand = connection.CreateCommand();
+                        addColumnCommand.CommandText = "ALTER TABLE Customers ADD COLUMN CurrentCredit REAL DEFAULT 0";
+                        addColumnCommand.ExecuteNonQuery();
+                    }
+
+                    // Add IsCreditCustomer column if it doesn't exist
+                    if (!existingColumns.Contains("iscreditcustomer"))
+                    {
+                        var addColumnCommand = connection.CreateCommand();
+                        addColumnCommand.CommandText = "ALTER TABLE Customers ADD COLUMN IsCreditCustomer INTEGER DEFAULT 0";
+                        addColumnCommand.ExecuteNonQuery();
+                    }
+                }
+                catch (Exception)
+                {
+                    // If migration fails, table might not exist yet, which is fine
+                                    // CREATE TABLE IF NOT EXISTS will handle it
+                                }
+                            }
+
+                            private void MigrateProductsTable(SqliteConnection connection)
+                            {
+                                try
+                                {
+                                    // Check if SupplierId column exists and add it if it doesn't
+                                    var columnCheckCommand = connection.CreateCommand();
+                                    columnCheckCommand.CommandText = "PRAGMA table_info(Products)";
+
+                                    var existingColumns = new HashSet<string>();
+                                    using (var reader = columnCheckCommand.ExecuteReader())
+                                    {
+                                        while (reader.Read())
+                                        {
+                                            existingColumns.Add(reader.GetString(1).ToLower()); // Column name is at index 1
+                                        }
+                                    }
+
+                                    // Add SupplierId column if it doesn't exist
+                                    if (!existingColumns.Contains("supplierid"))
+                                    {
+                                        var addColumnCommand = connection.CreateCommand();
+                                        addColumnCommand.CommandText = "ALTER TABLE Products ADD COLUMN SupplierId INTEGER";
+                                        addColumnCommand.ExecuteNonQuery();
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    // If migration fails, table might not exist yet, which is fine
+                                    // CREATE TABLE IF NOT EXISTS will handle it
+                                }
+                            }
+                    }
 
     // Keep DatabaseContext for backward compatibility
     public class DatabaseContext

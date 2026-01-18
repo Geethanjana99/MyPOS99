@@ -79,7 +79,13 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="🛒" FontSize="32" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                    <Image Source="/Logo.png" 
+                           Width="50" 
+                           Height="50" 
+                           Margin="0,0,15,0"
+                           VerticalAlignment="Center"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
                     <StackPanel>
                         <TextBlock Text="Point of Sale" FontSize="28" FontWeight="Bold" Foreground="#2C3E50"/>
                         <TextBlock Text="{Binding CurrentInvoiceNumber}" FontSize="14" Foreground="#7F8C8D"/>
@@ -95,9 +101,14 @@
                     </StackPanel>
                 </Border>
 
-                <Button Grid.Column="3" Content="Close" Click="CloseButton_Click" 
-                        Background="#95A5A6" Foreground="White" Padding="20,10" 
-                        BorderThickness="0" Cursor="Hand"/>
+                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                    <Button Content="📋 Recent Sales" Click="ViewRecentSalesButton_Click" 
+                            Background="#3498DB" Foreground="White" Padding="20,10" 
+                            BorderThickness="0" Cursor="Hand" Margin="0,0,10,0"/>
+                    <Button Content="Close" Click="CloseButton_Click" 
+                            Background="#95A5A6" Foreground="White" Padding="20,10" 
+                            BorderThickness="0" Cursor="Hand"/>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -334,9 +345,19 @@
                                     <TextBlock Text="Payment Details" FontSize="16" FontWeight="Bold" 
                                                Foreground="#2C3E50" Margin="0,0,0,15"/>
 
-                                    <TextBlock Text="Customer Name" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                                    <TextBox Text="{Binding CustomerName, UpdateSourceTrigger=PropertyChanged}" 
-                                             FontSize="14" Padding="12" Margin="0,0,0,15"/>
+                                    <TextBlock Text="Customer" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                    <ComboBox ItemsSource="{Binding Customers}" 
+                                              SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
+                                              FontSize="14" Padding="12" Margin="0,0,0,15">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding CreditStatus}" FontSize="11" Foreground="#7F8C8D"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
                                     <TextBlock Text="Payment Type" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
                                     <ComboBox ItemsSource="{Binding PaymentTypes}" SelectedItem="{Binding PaymentType}"

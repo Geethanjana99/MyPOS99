@@ -14,18 +14,37 @@ namespace MyPOS99.Views
 
         public SalesWindow()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
 
-            // Initialize ViewModel
-            var dbService = new DatabaseService();
-            _viewModel = new SalesViewModel(dbService);
-            DataContext = _viewModel;
+                // Initialize ViewModel
+                var dbService = new DatabaseService();
+                _viewModel = new SalesViewModel(dbService);
+                DataContext = _viewModel;
 
-            // Subscribe to SearchResults changes to auto-open popup
-            _viewModel.SearchResults.CollectionChanged += SearchResults_CollectionChanged;
+                // Subscribe to SearchResults changes to auto-open popup
+                _viewModel.SearchResults.CollectionChanged += SearchResults_CollectionChanged;
 
-            // Focus search box on load
-            Loaded += (s, e) => SearchTextBox.Focus();
+                // Focus search box on load
+                Loaded += (s, e) => 
+                {
+                    try
+                    {
+                        SearchTextBox.Focus();
+                    }
+                    catch
+                    {
+                        // Ignore focus errors
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error initializing Sales Window: {ex.Message}\n\nStack Trace:\n{ex.StackTrace}", 
+                    "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw; // Re-throw to prevent corrupted state
+            }
         }
 
         private void SearchResults_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

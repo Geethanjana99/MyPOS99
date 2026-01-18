@@ -1,0 +1,246 @@
+﻿<Window x:Class="MyPOS99.Views.ExpensesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Expense Management" 
+        Height="900" 
+        Width="1400"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
+        Background="#F5F6FA">
+
+    <Window.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2980B9"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#BDC3C7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SuccessButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#27AE60"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#229954"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WarningButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#E67E22"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#D35400"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Background="White" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="/Logo.png" 
+                           Width="45" 
+                           Height="45" 
+                           Margin="0,0,15,0"
+                           VerticalAlignment="Center"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <StackPanel>
+                        <TextBlock Text="Expense Management" FontSize="28" FontWeight="Bold" Foreground="#2C3E50"/>
+                        <TextBlock Text="Track expenses and generate reports" FontSize="14" Foreground="#7F8C8D"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Today's Total Expenses Display -->
+                <Border Grid.Column="2" Background="#E74C3C" CornerRadius="8" Padding="15,10" Margin="0,0,15,0">
+                    <StackPanel>
+                        <TextBlock Text="Today's Total Expenses" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding TodaysTotalExpensesFormatted}" FontSize="20" FontWeight="Bold" 
+                                   Foreground="White" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <Button Grid.Column="3" Content="Close" Click="CloseButton_Click"
+                        Background="#95A5A6" Foreground="White" Padding="20,10"
+                        BorderThickness="0" Cursor="Hand"/>
+            </Grid>
+        </Border>
+
+        <!-- Scrollable Content Area -->
+        <ScrollViewer Grid.Row="1" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="500"/>
+                </Grid.RowDefinitions>
+
+                <!-- Stats Cards -->
+                <Grid Grid.Row="0" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Add Expense Card -->
+                    <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="20">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Add New Expense" FontSize="20" FontWeight="Bold" 
+                                       Foreground="#2C3E50" Margin="0,0,0,20"/>
+
+                            <StackPanel Grid.Row="1">
+                                <TextBlock Text="Category *" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding Categories}" 
+                                          SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                          FontSize="14" Padding="12" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Amount (Rs.) *" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding Amount, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}"
+                                         FontSize="14" Padding="12" Margin="0,0,0,15"
+                                         BorderBrush="#BDC3C7" BorderThickness="2"/>
+
+                                <TextBlock Text="Date" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <DatePicker SelectedDate="{Binding ExpenseDate}"
+                                            FontSize="14" Padding="12" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Payment Method" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <ComboBox ItemsSource="{Binding PaymentMethods}" 
+                                          SelectedItem="{Binding PaymentMethod}"
+                                          FontSize="14" Padding="12" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Note (Optional)" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                         FontSize="12" Padding="10" Height="60" TextWrapping="Wrap"
+                                         AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                                         Margin="0,0,0,15"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Orientation="Horizontal">
+                                <Button Content="➕ Add Expense" Command="{Binding AddExpenseCommand}"
+                                        Style="{StaticResource SuccessButton}" Width="150"/>
+                                <Button Content="🔄 Clear" Command="{Binding ClearFormCommand}"
+                                        Style="{StaticResource ActionButton}" Width="100"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Filter & Report Card -->
+                    <Border Grid.Column="2" Background="White" CornerRadius="12" Padding="20">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Expense Report" FontSize="20" FontWeight="Bold" 
+                                       Foreground="#2C3E50" Margin="0,0,0,20"/>
+
+                            <StackPanel Grid.Row="1">
+                                <TextBlock Text="Start Date" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <DatePicker SelectedDate="{Binding FilterStartDate}"
+                                            FontSize="14" Padding="12" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="End Date" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <DatePicker SelectedDate="{Binding FilterEndDate}"
+                                            FontSize="14" Padding="12" Margin="0,0,0,15"/>
+
+                                <Button Content="🔍 Filter Expenses" Command="{Binding FilterExpensesCommand}"
+                                        Style="{StaticResource ActionButton}" Height="45" Margin="0,10,0,0"/>
+                            </StackPanel>
+
+                            <!-- Total Display -->
+                            <Border Grid.Row="2" Background="#FFF3CD" CornerRadius="8" Padding="15" Margin="0,20,0,15">
+                                <Grid>
+                                    <TextBlock Text="Period Total:" FontSize="16" FontWeight="SemiBold" Foreground="#856404"/>
+                                    <TextBlock Text="{Binding FilteredTotalExpensesFormatted}" FontSize="20" 
+                                               FontWeight="Bold" Foreground="#856404" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </Border>
+
+                            <Button Grid.Row="3" Content="📊 Export Report" Command="{Binding ExportReportCommand}"
+                                    Style="{StaticResource WarningButton}" Height="45"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Expense List -->
+                <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="Expense History" FontSize="20" FontWeight="Bold" 
+                                   Foreground="#2C3E50" Margin="0,0,0,15"/>
+
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Expenses}"
+                                  SelectedItem="{Binding SelectedExpense, Mode=TwoWay}"
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  Background="White" BorderThickness="1" BorderBrush="#ECF0F1"
+                                  GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                                  RowHeight="45" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="100"/>
+                                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="150"/>
+                                <DataGridTextColumn Header="Amount" Binding="{Binding Amount, StringFormat=Rs. {0:N2}}" Width="120"/>
+                                <DataGridTextColumn Header="Payment Method" Binding="{Binding PaymentMethod}" Width="130"/>
+                                <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>

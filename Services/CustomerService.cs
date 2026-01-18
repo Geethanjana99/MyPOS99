@@ -16,7 +16,8 @@ namespace MyPOS99.Services
         public async Task<List<Customer>> GetAllCustomersAsync()
         {
             const string query = @"
-                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreatedAt, IsActive 
+                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreditLimit, 
+                       CurrentCredit, IsCreditCustomer, CreatedAt, IsActive 
                 FROM Customers 
                 WHERE IsActive = 1 
                 ORDER BY Name
@@ -28,7 +29,8 @@ namespace MyPOS99.Services
         public async Task<Customer?> GetCustomerByIdAsync(int id)
         {
             const string query = @"
-                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreatedAt, IsActive 
+                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreditLimit, 
+                       CurrentCredit, IsCreditCustomer, CreatedAt, IsActive 
                 FROM Customers 
                 WHERE Id = @id
             ";
@@ -41,7 +43,8 @@ namespace MyPOS99.Services
         public async Task<Customer?> GetCustomerByPhoneAsync(string phone)
         {
             const string query = @"
-                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreatedAt, IsActive 
+                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreditLimit, 
+                       CurrentCredit, IsCreditCustomer, CreatedAt, IsActive 
                 FROM Customers 
                 WHERE Phone = @phone
             ";
@@ -54,7 +57,8 @@ namespace MyPOS99.Services
         public async Task<List<Customer>> SearchCustomersAsync(string searchTerm)
         {
             const string query = @"
-                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreatedAt, IsActive 
+                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreditLimit, 
+                       CurrentCredit, IsCreditCustomer, CreatedAt, IsActive 
                 FROM Customers 
                 WHERE (Name LIKE @search OR Phone LIKE @search OR Email LIKE @search) 
                 AND IsActive = 1
@@ -69,8 +73,8 @@ namespace MyPOS99.Services
         public async Task<bool> AddCustomerAsync(Customer customer)
         {
             const string query = @"
-                INSERT INTO Customers (Name, Phone, Email, Address, IsActive)
-                VALUES (@name, @phone, @email, @address, @isActive)
+                INSERT INTO Customers (Name, Phone, Email, Address, CreditLimit, CurrentCredit, IsCreditCustomer, IsActive)
+                VALUES (@name, @phone, @email, @address, @creditLimit, @currentCredit, @isCreditCustomer, @isActive)
             ";
 
             var rowsAffected = await _db.ExecuteNonQueryAsync(query,
@@ -78,6 +82,9 @@ namespace MyPOS99.Services
                 DatabaseService.CreateParameter("@phone", customer.Phone),
                 DatabaseService.CreateParameter("@email", customer.Email),
                 DatabaseService.CreateParameter("@address", customer.Address),
+                DatabaseService.CreateParameter("@creditLimit", customer.CreditLimit),
+                DatabaseService.CreateParameter("@currentCredit", customer.CurrentCredit),
+                DatabaseService.CreateParameter("@isCreditCustomer", customer.IsCreditCustomer ? 1 : 0),
                 DatabaseService.CreateParameter("@isActive", customer.IsActive ? 1 : 0)
             );
 
@@ -89,7 +96,8 @@ namespace MyPOS99.Services
             const string query = @"
                 UPDATE Customers 
                 SET Name = @name, Phone = @phone, Email = @email, 
-                    Address = @address, IsActive = @isActive
+                    Address = @address, CreditLimit = @creditLimit, CurrentCredit = @currentCredit, 
+                    IsCreditCustomer = @isCreditCustomer, IsActive = @isActive
                 WHERE Id = @id
             ";
 
@@ -99,6 +107,9 @@ namespace MyPOS99.Services
                 DatabaseService.CreateParameter("@phone", customer.Phone),
                 DatabaseService.CreateParameter("@email", customer.Email),
                 DatabaseService.CreateParameter("@address", customer.Address),
+                DatabaseService.CreateParameter("@creditLimit", customer.CreditLimit),
+                DatabaseService.CreateParameter("@currentCredit", customer.CurrentCredit),
+                DatabaseService.CreateParameter("@isCreditCustomer", customer.IsCreditCustomer ? 1 : 0),
                 DatabaseService.CreateParameter("@isActive", customer.IsActive ? 1 : 0)
             );
 
@@ -148,7 +159,8 @@ namespace MyPOS99.Services
         public async Task<List<Customer>> GetTopCustomersAsync(int limit = 10)
         {
             const string query = @"
-                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreatedAt, IsActive 
+                SELECT Id, Name, Phone, Email, Address, TotalPurchases, CreditLimit, 
+                       CurrentCredit, IsCreditCustomer, CreatedAt, IsActive 
                 FROM Customers 
                 WHERE IsActive = 1 
                 ORDER BY TotalPurchases DESC 
@@ -158,6 +170,38 @@ namespace MyPOS99.Services
             return await _db.ExecuteQueryAsync(query, MapCustomer,
                 DatabaseService.CreateParameter("@limit", limit)
             );
+        }
+
+        public async Task<bool> UpdateCustomerCreditAsync(int customerId, decimal creditAmount)
+        {
+            const string query = @"
+                UPDATE Customers 
+                SET CurrentCredit = CurrentCredit + @creditAmount 
+                WHERE Id = @customerId
+            ";
+
+            var rowsAffected = await _db.ExecuteNonQueryAsync(query,
+                DatabaseService.CreateParameter("@customerId", customerId),
+                DatabaseService.CreateParameter("@creditAmount", creditAmount)
+            );
+
+            return rowsAffected > 0;
+        }
+
+        public async Task<bool> UpdateCustomerPurchaseTotalAsync(int customerId, decimal amount)
+        {
+            const string query = @"
+                UPDATE Customers 
+                SET TotalPurchases = TotalPurchases + @amount 
+                WHERE Id = @customerId
+            ";
+
+            var rowsAffected = await _db.ExecuteNonQueryAsync(query,
+                DatabaseService.CreateParameter("@customerId", customerId),
+                DatabaseService.CreateParameter("@amount", amount)
+            );
+
+            return rowsAffected > 0;
         }
 
         private static Customer MapCustomer(SqliteDataReader reader)
@@ -170,8 +214,11 @@ namespace MyPOS99.Services
                 Email = reader.IsDBNull(3) ? null : reader.GetString(3),
                 Address = reader.IsDBNull(4) ? null : reader.GetString(4),
                 TotalPurchases = (decimal)reader.GetDouble(5),
-                CreatedAt = DateTime.Parse(reader.GetString(6)),
-                IsActive = reader.GetInt32(7) == 1
+                CreditLimit = (decimal)reader.GetDouble(6),
+                CurrentCredit = (decimal)reader.GetDouble(7),
+                IsCreditCustomer = reader.GetInt32(8) == 1,
+                CreatedAt = DateTime.Parse(reader.GetString(9)),
+                IsActive = reader.GetInt32(10) == 1
             };
         }
     }

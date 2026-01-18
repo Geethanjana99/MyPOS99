@@ -162,11 +162,19 @@ namespace MyPOS99.ViewModels
 
         private void OpenNewSale()
         {
-            var salesWindow = new Views.SalesWindow();
-            salesWindow.ShowDialog();
+            try
+            {
+                var salesWindow = new Views.SalesWindow();
+                salesWindow.ShowDialog();
 
-            // Refresh dashboard data after closing sales window
-            _ = LoadDashboardDataAsync();
+                // Refresh dashboard data after closing sales window
+                _ = LoadDashboardDataAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error opening Sales Window: {ex.Message}\n\nDetails:\n{ex.StackTrace}", 
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void OpenProducts()
@@ -180,26 +188,38 @@ namespace MyPOS99.ViewModels
 
         private void OpenCustomers()
         {
-            MessageBox.Show("Customers module coming soon!", "Info", 
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            var customersWindow = new Views.CustomersWindow();
+            customersWindow.ShowDialog();
+
+            // Refresh dashboard data after closing customers window
+            _ = LoadDashboardDataAsync();
         }
 
         private void OpenSuppliers()
         {
-            MessageBox.Show("Suppliers module coming soon!", "Info", 
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            var suppliersWindow = new Views.SuppliersWindow();
+            suppliersWindow.ShowDialog();
+
+            // Refresh dashboard data after closing suppliers window
+            _ = LoadDashboardDataAsync();
         }
 
         private void OpenExpenses()
         {
-            MessageBox.Show("Expenses module coming soon!", "Info", 
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            var expensesWindow = new Views.ExpensesWindow();
+            expensesWindow.ShowDialog();
+
+            // Refresh dashboard data after closing expenses window
+            _ = LoadDashboardDataAsync();
         }
 
         private void OpenReports()
         {
-            MessageBox.Show("Reports module coming soon!", "Info", 
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            var reportsWindow = new Views.ReportsWindow();
+            reportsWindow.ShowDialog();
+
+            // Refresh dashboard data after closing reports window
+            _ = LoadDashboardDataAsync();
         }
 
         private void Logout()

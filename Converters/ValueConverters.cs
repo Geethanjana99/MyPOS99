@@ -107,20 +107,41 @@ namespace MyPOS99.Converters
         }
     }
 
-    public class BoolToStockStatusConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public class BoolToStockStatusConverter : IValueConverter
         {
-            if (value is bool isLowStock)
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
             {
-                return isLowStock ? "LOW STOCK" : "IN STOCK";
+                if (value is bool isLowStock)
+                {
+                    return isLowStock ? "LOW STOCK" : "IN STOCK";
+                }
+                return "IN STOCK";
             }
-            return "IN STOCK";
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                throw new NotImplementedException();
+            }
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public class BoolToStringConverter : IValueConverter
         {
-            throw new NotImplementedException();
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                if (value is bool boolValue && parameter is string paramString)
+                {
+                    var parts = paramString.Split('|');
+                    if (parts.Length == 2)
+                    {
+                        return boolValue ? parts[0] : parts[1];
+                    }
+                }
+                return string.Empty;
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
-}

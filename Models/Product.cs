@@ -11,8 +11,12 @@ namespace MyPOS99.Models
         public int StockQty { get; set; }
         public int MinStockLevel { get; set; }
         public string? Barcode { get; set; }
+        public int? SupplierId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        // Navigation property
+        public Supplier? Supplier { get; set; }
 
         // Computed properties
         public decimal Profit => SellPrice - CostPrice;

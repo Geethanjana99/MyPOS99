@@ -19,7 +19,13 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#2C3E50" Padding="20,15">
+        <Border Grid.Row="0" Padding="20,15">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#ECF0F1" Offset="0"/>
+                    <GradientStop Color="#D5DBDB" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -27,10 +33,17 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal">
+                    <Image Source="/Logo.png" 
+                           Width="40" 
+                           Height="40" 
+                           Margin="0,0,15,0"
+                           VerticalAlignment="Center"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
                     <TextBlock Text="MyPOS99" 
                                FontSize="24" 
                                FontWeight="Bold" 
-                               Foreground="White"
+                               Foreground="#2C3E50"
                                VerticalAlignment="Center"
                                Margin="0,0,30,0"/>
                     <TextBlock Text="|" 
@@ -40,26 +53,29 @@
                                Margin="0,0,30,0"/>
                     <TextBlock Text="Dashboard" 
                                FontSize="20" 
-                               Foreground="#ECF0F1"
+                               Foreground="#34495E"
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Border Background="#34495E" 
+                    <Border Background="White" 
                             CornerRadius="6" 
                             Padding="15,8"
-                            Margin="0,0,15,0">
+                            Margin="0,0,15,0"
+                            BorderBrush="#BDC3C7"
+                            BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="👤" 
                                        FontSize="16"
                                        Margin="0,0,8,0"/>
                             <TextBlock Text="{Binding UserName}" 
-                                       Foreground="White"
+                                       Foreground="#2C3E50"
                                        FontSize="14"
+                                       FontWeight="SemiBold"
                                        VerticalAlignment="Center"
                                        Margin="0,0,10,0"/>
                             <TextBlock Text="|" 
-                                       Foreground="#7F8C8D"
+                                       Foreground="#BDC3C7"
                                        Margin="0,0,10,0"
                                        VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding UserRole}" 

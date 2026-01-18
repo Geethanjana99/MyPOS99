@@ -7,13 +7,16 @@
     <Application.Resources>
         <!-- Converters -->
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
         <converters:BoolToFormTitleConverter x:Key="BoolToFormTitleConverter"/>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
         <converters:BoolToStockStatusConverter x:Key="BoolToStockStatusConverter"/>
-        
+        <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
+        <converters:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter"/>
+
         <!-- Add your global styles and resources here -->
         <SolidColorBrush x:Key="PrimaryColor" Color="#2C3E50"/>
         <SolidColorBrush x:Key="AccentColor" Color="#3498DB"/>

@@ -1,0 +1,313 @@
+﻿<Window x:Class="MyPOS99.Views.CustomersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Customer Management" 
+        Height="800" 
+        Width="1400"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F6FA">
+
+    <Window.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2980B9"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#BDC3C7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SuccessButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#27AE60"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#229954"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#C0392B"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WarningButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Background" Value="#F39C12"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E67E22"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Background="White" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="/Logo.png" 
+                           Width="45" 
+                           Height="45" 
+                           Margin="0,0,15,0"
+                           VerticalAlignment="Center"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <StackPanel>
+                        <TextBlock Text="Customer Management" FontSize="28" FontWeight="Bold" Foreground="#2C3E50"/>
+                        <TextBlock Text="Manage customers and track purchase history" FontSize="14" Foreground="#7F8C8D"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Grid.Column="2" Content="Close" Click="CloseButton_Click"
+                        Background="#95A5A6" Foreground="White" Padding="20,10"
+                        BorderThickness="0" Cursor="Hand"/>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left - Customer List -->
+            <Border Background="White" CornerRadius="12" Padding="20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Title -->
+                    <TextBlock Text="Customer List" FontSize="20" FontWeight="Bold" 
+                               Foreground="#2C3E50" Margin="0,0,0,15"/>
+
+                    <!-- Search -->
+                    <Grid Grid.Row="1" Margin="0,0,0,15">
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="14" Padding="12"
+                                 BorderBrush="#BDC3C7" BorderThickness="2">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="">
+                                            <Setter Property="Background">
+                                                <Setter.Value>
+                                                    <VisualBrush Stretch="None" AlignmentX="Left">
+                                                        <VisualBrush.Visual>
+                                                            <TextBlock Text="🔍 Search by name, phone, or email..." 
+                                                                       Foreground="#95A5A6" FontSize="14" Margin="5,0,0,0"/>
+                                                        </VisualBrush.Visual>
+                                                    </VisualBrush>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                        <Trigger Property="IsFocused" Value="True">
+                                            <Setter Property="BorderBrush" Value="#3498DB"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </Grid>
+
+                    <!-- Customer DataGrid -->
+                    <DataGrid Grid.Row="2" ItemsSource="{Binding Customers}"
+                              SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              Background="White" BorderThickness="1" BorderBrush="#ECF0F1"
+                              GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                              RowHeight="45" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" MinWidth="150"/>
+                            <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="120"/>
+                            <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="180"/>
+                            <DataGridTextColumn Header="Total Purchases" Binding="{Binding TotalPurchases, StringFormat=Rs. {0:N2}}" Width="130"/>
+                            <DataGridTextColumn Header="Credit Status" Binding="{Binding CreditStatus}" Width="200"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Purchase History Button -->
+                    <Button Grid.Row="3" Content="📊 View Purchase History" 
+                            Command="{Binding ViewPurchaseHistoryCommand}"
+                            Style="{StaticResource ActionButton}" 
+                            HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                </Grid>
+            </Border>
+
+            <!-- Right - Customer Form -->
+            <Border Grid.Column="2" Background="White" CornerRadius="12" Padding="20">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{Binding IsEditing, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Edit Customer|Add New Customer'}" 
+                                   FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,20"/>
+
+                        <!-- Customer Name -->
+                        <TextBlock Text="Customer Name *" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding CustomerName, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="14" Padding="12" Margin="0,0,0,15"
+                                 BorderBrush="#BDC3C7" BorderThickness="2"/>
+
+                        <!-- Phone -->
+                        <TextBlock Text="Phone" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="14" Padding="12" Margin="0,0,0,15"
+                                 BorderBrush="#BDC3C7" BorderThickness="2"/>
+
+                        <!-- Email -->
+                        <TextBlock Text="Email" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="14" Padding="12" Margin="0,0,0,15"
+                                 BorderBrush="#BDC3C7" BorderThickness="2"/>
+
+                        <!-- Address -->
+                        <TextBlock Text="Address" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="14" Padding="12" Height="70" TextWrapping="Wrap"
+                                 AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                                 Margin="0,0,0,15"
+                                 BorderBrush="#BDC3C7" BorderThickness="2"/>
+
+                        <!-- Credit Customer Checkbox -->
+                        <CheckBox Content="Credit Customer" IsChecked="{Binding IsCreditCustomer}"
+                                  FontSize="14" FontWeight="SemiBold" Margin="0,0,0,15"
+                                  Foreground="#2C3E50"/>
+
+                        <!-- Credit Limit (only visible for credit customers) -->
+                        <StackPanel Visibility="{Binding IsCreditCustomer, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="Credit Limit (Rs.)" FontSize="13" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                            <TextBox Text="{Binding CreditLimit, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}"
+                                     FontSize="14" Padding="12" Margin="0,0,0,15"
+                                     BorderBrush="#BDC3C7" BorderThickness="2"/>
+                        </StackPanel>
+
+                        <!-- Current Credit (visible when editing) -->
+                        <Border Background="#FFF3CD" CornerRadius="6" Padding="12" Margin="0,0,0,15"
+                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,5">
+                                    <TextBlock Text="Total Purchases:" FontSize="12" Foreground="#856404"/>
+                                    <TextBlock Text="{Binding TotalPurchases, StringFormat=Rs. {0:N2}}" 
+                                               FontSize="12" FontWeight="Bold" Foreground="#856404" 
+                                               HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Visibility="{Binding IsCreditCustomer, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock Text="Current Credit:" FontSize="12" Foreground="#856404"/>
+                                    <TextBlock Text="{Binding CurrentCredit, StringFormat=Rs. {0:N2}}" 
+                                               FontSize="12" FontWeight="Bold" Foreground="#856404" 
+                                               HorizontalAlignment="Right"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Action Buttons -->
+                        <StackPanel>
+                            <Button Content="➕ Add Customer" Command="{Binding AddCommand}"
+                                    Style="{StaticResource SuccessButton}" Height="45"
+                                    Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+
+                            <Button Content="💾 Update Customer" Command="{Binding UpdateCommand}"
+                                    Style="{StaticResource ActionButton}" Height="45"
+                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"/>
+
+                            <Button Content="🗑️ Delete Customer" Command="{Binding DeleteCommand}"
+                                    Style="{StaticResource DangerButton}" Height="45"/>
+
+                            <Button Content="🔄 Clear Form" Command="{Binding ClearFormCommand}"
+                                    Style="{StaticResource WarningButton}" Height="45"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Purchase History Popup -->
+        <Popup x:Name="PurchaseHistoryPopup" 
+               AllowsTransparency="True" 
+               StaysOpen="False"
+               Placement="Center"
+               Width="800" Height="500">
+            <Border Background="White" BorderBrush="#3498DB" BorderThickness="2" 
+                    CornerRadius="8" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.3"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Purchase History" FontSize="22" FontWeight="Bold" 
+                               Foreground="#2C3E50" Margin="0,0,0,15"/>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding PurchaseHistory}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              Background="White" BorderThickness="0"
+                              GridLinesVisibility="Horizontal" HeadersVisibility="Column"
+                              RowHeight="40">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Invoice #" Binding="{Binding InvoiceNumber}" Width="120"/>
+                            <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=dd/MM/yyyy}" Width="100"/>
+                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=Rs. {0:N2}}" Width="120"/>
+                            <DataGridTextColumn Header="Payment Type" Binding="{Binding PaymentType}" Width="120"/>
+                            <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Button Grid.Row="2" Content="Close" Click="ClosePurchaseHistoryPopup_Click"
+                            Style="{StaticResource ActionButton}" HorizontalAlignment="Right" 
+                            Margin="0,10,0,0"/>
+                </Grid>
+            </Border>
+        </Popup>
+    </Grid>
+</Window>

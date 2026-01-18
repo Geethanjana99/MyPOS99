@@ -115,47 +115,58 @@
             </Grid.ColumnDefinitions>
 
             <!-- Left Side - Branding -->
-            <Border Grid.Column="0" Background="#2C3E50" CornerRadius="15,0,0,15">
+            <Border Grid.Column="0" CornerRadius="15,0,0,15">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#ECF0F1" Offset="0"/>
+                        <GradientStop Color="#BDC3C7" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
                 <Grid>
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="40">
-                        <!-- Logo/Icon -->
-                        <Viewbox Width="120" Height="120" Margin="0,0,0,30">
-                            <Canvas Width="100" Height="100">
-                                <Ellipse Width="100" Height="100" Fill="#3498DB"/>
-                                <Ellipse Width="120" Height="120" Fill="#3498DB" Margin="0,0,0,30"/>
-                            </Canvas>
-                        </Viewbox>
+                        <!-- Logo -->
+                        <Image Source="/Logo.png" 
+                               Width="150" 
+                               Height="150" 
+                               Margin="0,0,0,30"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
 
                         <!-- Branding Text -->
                         <TextBlock Text="MyPOS99" 
                                    FontSize="42" 
                                    FontWeight="Bold" 
-                                   Foreground="White"
+                                   Foreground="#2C3E50"
                                    HorizontalAlignment="Center"
                                    Margin="0,0,0,10"/>
 
                         <TextBlock Text="Point of Sale System" 
                                    FontSize="18" 
-                                   Foreground="#ECF0F1"
+                                   Foreground="#34495E"
                                    HorizontalAlignment="Center"
                                    Margin="0,0,0,40"/>
 
-                        <Border Background="#34495E" 
+                        <Border Background="White" 
                                 CornerRadius="8" 
                                 Padding="20,15"
-                                Margin="0,20,0,0">
+                                Margin="0,20,0,0"
+                                BorderBrush="#3498DB"
+                                BorderThickness="2">
                             <StackPanel>
                                 <TextBlock Text="✓ Fast &amp; Secure" 
-                                           Foreground="White" 
+                                           Foreground="#2C3E50" 
                                            FontSize="14"
+                                           FontWeight="SemiBold"
                                            Margin="0,0,0,8"/>
                                 <TextBlock Text="✓ Inventory Management" 
-                                           Foreground="White" 
+                                           Foreground="#2C3E50" 
                                            FontSize="14"
+                                           FontWeight="SemiBold"
                                            Margin="0,0,0,8"/>
                                 <TextBlock Text="✓ Sales Analytics" 
-                                           Foreground="White" 
-                                           FontSize="14"/>
+                                           Foreground="#2C3E50" 
+                                           FontSize="14"
+                                           FontWeight="SemiBold"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

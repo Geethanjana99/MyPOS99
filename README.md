@@ -88,7 +88,7 @@ The application uses **SQLite** with the following schema:
 
 **See:** `Data/DATABASE_SERVICE_GUIDE.md` for detailed usage
 
-## ?? Technologies
+## ??? Technologies
 
 - **.NET 10** - Latest .NET framework
 - **WPF** - Windows Presentation Foundation
@@ -96,34 +96,86 @@ The application uses **SQLite** with the following schema:
 - **MVVM Pattern** - Model-View-ViewModel architecture
 - **C# 12** - Latest language features
 
+## ?? Screenshots
+
+### Login Screen
+Secure authentication with role-based access control.
+
+![Login Screen](Screenshots/Login.png)
+
+### Dashboard
+Comprehensive overview with key metrics and quick actions.
+
+![Dashboard](Screenshots/Dashboard.png)
+
+### Sales/POS Interface
+Intuitive point-of-sale system with cart management and multiple payment options.
+
+![Sales Screen](Screenshots/Sales.png)
+
+### Product Management
+Complete inventory management with stock tracking and category organization.
+
+![Product Management](Screenshots/Product.png)
+
+### Customer Management
+Customer database with purchase history and contact information.
+
+![Customer Management](Screenshots/Customer.png)
+
+### Supplier Management
+Supplier tracking and relationship management.
+
+![Supplier Management](Screenshots/Supplier.png)
+
+### Expense Tracking
+Business expense monitoring and categorization.
+
+![Expense Tracking](Screenshots/Expense.png)
+
+### Reports & Analytics
+Comprehensive reporting system with multiple report types.
+
+![Reports Dashboard](Screenshots/Reports.png)
+
+### PDF Report Generation
+Professional PDF exports for all report types.
+
+![PDF Report Sample](Screenshots/Report%20PDf.png)
+
 ## ?? Documentation
 
 - **Database Schema**: See `Data/DATABASE_SCHEMA.md`
 - **Service Usage**: See `Data/DATABASE_SERVICE_GUIDE.md`
 - **API Reference**: See inline code comments
 
-## ?? Key Features
+## ? Key Features
 
-### Current Implementation
+### Core Features (Fully Implemented)
+- ? **User Authentication & Authorization** - Role-based access control (Admin, Cashier, Manager)
+- ? **Dashboard** - Real-time metrics and quick action buttons
+- ? **Sales/POS Interface** - Complete point-of-sale system with cart management
+- ? **Product Management** - Full CRUD operations with stock tracking
+- ? **Inventory Management** - Automatic stock updates and low-stock alerts
+- ? **Customer Management** - Customer database with purchase history
+- ? **Supplier Management** - Supplier tracking and contact management
+- ? **Purchase Orders** - Purchase entry and inventory receiving
+- ? **Expense Tracking** - Business expense monitoring and categorization
+- ? **Reports & Analytics** - Comprehensive reporting with PDF/Excel export
+- ? **Return/Exchange Management** - Sales return and exchange processing
+- ? **Multi-Payment Support** - Cash, Card, Mobile, and Credit payment types
+- ? **Receipt Generation** - Automated PDF receipt creation
+
+### Technical Implementation
 - ? MVVM architecture with ViewModelBase
-- ? SQLite database with 10 tables
-- ? Secure parameterized queries
-- ? Complete service layer (7 services)
-- ? Transaction support
-- ? Comprehensive models (10 entities)
-- ? Automatic database initialization
-- ? Sample data included
-
-### Ready for Implementation
-- ?? User authentication & authorization
-- ?? Product management UI
-- ?? Sales/POS interface
-- ?? Inventory management
-- ?? Customer management
-- ?? Supplier management
-- ?? Purchase orders
-- ?? Expense tracking
-- ?? Reports & analytics
+- ? SQLite database with 10 normalized tables
+- ? Secure parameterized queries (SQL injection protection)
+- ? Complete service layer (10+ services)
+- ? Transaction support for data integrity
+- ? Async/await patterns throughout
+- ? PDF and Excel export functionality
+- ? Custom WPF value converters
+- ? Comprehensive data validation
 
 ## ?? Security
 
@@ -157,7 +209,7 @@ var products = await productService.GetAllProductsAsync();
 var searchResults = await productService.SearchProductsAsync("Laptop");
 ```
 
-## ?? Development Roadmap
+## ??? Development Roadmap
 
 ### Phase 1 - UI Development (Next)
 - [ ] Login screen

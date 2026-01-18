@@ -41,18 +41,43 @@ namespace MyPOS99.Views
         {
             if (e.Key == Key.Enter)
             {
-                var code = ProductCodeTextBox.Text.Trim();
-                if (string.IsNullOrWhiteSpace(code))
+                var searchText = ProductCodeTextBox.Text.Trim();
+                if (string.IsNullOrWhiteSpace(searchText))
                     return;
 
                 try
                 {
-                    // Search by code
-                    var product = await _productService.GetProductByCodeAsync(code);
+                    Product? product = null;
+
+                    // First try exact code match
+                    product = await _productService.GetProductByCodeAsync(searchText);
+
+                    // If not found, try barcode search
+                    if (product == null)
+                    {
+                        product = await _productService.GetProductByBarcodeAsync(searchText);
+                    }
+
+                    // If still not found, try name search
+                    if (product == null)
+                    {
+                        var products = await _productService.SearchProductsAsync(searchText);
+                        if (products.Count == 1)
+                        {
+                            product = products[0];
+                        }
+                        else if (products.Count > 1)
+                        {
+                            MessageBox.Show($"Multiple products found matching '{searchText}'. Please be more specific or use the product code.", 
+                                "Multiple Matches", MessageBoxButton.OK, MessageBoxImage.Information);
+                            ProductCodeTextBox.SelectAll();
+                            return;
+                        }
+                    }
 
                     if (product == null)
                     {
-                        MessageBox.Show($"Product not found: {code}", "Not Found",
+                        MessageBox.Show($"Product not found: {searchText}", "Not Found",
                             MessageBoxButton.OK, MessageBoxImage.Warning);
                         ProductCodeTextBox.SelectAll();
                         return;

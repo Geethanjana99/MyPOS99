@@ -14,15 +14,18 @@ namespace MyPOS99.ViewModels
         private readonly ProductService _productService;
         private readonly SaleService _saleService;
         private readonly PdfReceiptService _pdfService;
+        private readonly CustomerService _customerService;
 
         private ObservableCollection<CartItem> _cartItems;
         private ObservableCollection<Sale> _recentSales;
         private ObservableCollection<Product> _searchResults;
-        
+        private ObservableCollection<Customer> _customers;
+
         private string _searchText = string.Empty;
         private Product? _selectedProduct;
         private CartItem? _selectedCartItem;
-        
+        private Customer? _selectedCustomer;
+
         private decimal _subTotal;
         private decimal _totalDiscount;
         private decimal _tax;
@@ -46,14 +49,16 @@ namespace MyPOS99.ViewModels
             _productService = new ProductService(dbContext);
             _saleService = new SaleService(dbContext);
             _pdfService = new PdfReceiptService();
+            _customerService = new CustomerService(_db);
 
             _cartItems = new ObservableCollection<CartItem>();
             _recentSales = new ObservableCollection<Sale>();
             _searchResults = new ObservableCollection<Product>();
-            
+            _customers = new ObservableCollection<Customer>();
+
             // Subscribe to cart changes
             _cartItems.CollectionChanged += (s, e) => CalculateTotals();
-            
+
             // Initialize commands
             SearchProductCommand = new RelayCommand(async () => await SearchProductsAsync());
             AddToCartCommand = new RelayCommand(AddToCart, CanAddToCart);
@@ -73,6 +78,7 @@ namespace MyPOS99.ViewModels
                 // Load recent sales and today's total
                 _ = LoadRecentSalesAsync();
                 _ = LoadTodaysTotalSalesAsync();
+                _ = LoadCustomersAsync();
             }
 
         #region Properties
@@ -93,6 +99,34 @@ namespace MyPOS99.ViewModels
         {
             get => _searchResults;
             set => SetProperty(ref _searchResults, value);
+        }
+
+        public ObservableCollection<Customer> Customers
+        {
+            get => _customers;
+            set => SetProperty(ref _customers, value);
+        }
+
+        public Customer? SelectedCustomer
+        {
+            get => _selectedCustomer;
+            set
+            {
+                if (SetProperty(ref _selectedCustomer, value))
+                {
+                    if (value != null)
+                    {
+                        CustomerName = value.DisplayName;
+
+                        // Update payment type for credit customers
+                        if (value.IsCreditCustomer && value.Id != 1)
+                        {
+                            PaymentType = "Credit";
+                        }
+                    }
+                    ((RelayCommand)ProcessSaleCommand).RaiseCanExecuteChanged();
+                }
+            }
         }
 
         public string SearchText
@@ -266,7 +300,7 @@ namespace MyPOS99.ViewModels
             try
             {
                 const string query = @"
-                    SELECT Id, Code, Name, Category, CostPrice, SellPrice, StockQty, MinStockLevel, Barcode, CreatedAt, UpdatedAt
+                    SELECT Id, Code, Name, Category, CostPrice, SellPrice, StockQty, MinStockLevel, Barcode, SupplierId, CreatedAt, UpdatedAt
                     FROM Products
                     WHERE (Code LIKE @search OR Name LIKE @search OR Barcode LIKE @search)
                     AND StockQty > 0
@@ -285,8 +319,9 @@ namespace MyPOS99.ViewModels
                     StockQty = reader.GetInt32(6),
                     MinStockLevel = reader.GetInt32(7),
                     Barcode = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    CreatedAt = DateTime.Parse(reader.GetString(9)),
-                    UpdatedAt = DateTime.Parse(reader.GetString(10))
+                    SupplierId = reader.IsDBNull(9) ? null : reader.GetInt32(9),
+                    CreatedAt = DateTime.Parse(reader.GetString(10)),
+                    UpdatedAt = DateTime.Parse(reader.GetString(11))
                 }, DatabaseService.CreateParameter("@search", $"%{SearchText}%"));
 
                 SearchResults.Clear();
@@ -430,7 +465,18 @@ namespace MyPOS99.ViewModels
                 return;
             }
 
-            if (AmountPaid < GrandTotal)
+            // Validate credit limit for credit customers
+            if (SelectedCustomer != null && SelectedCustomer.IsCreditCustomer && SelectedCustomer.Id != 1)
+            {
+                var availableCredit = SelectedCustomer.CreditLimit - SelectedCustomer.CurrentCredit;
+                if (GrandTotal > availableCredit)
+                {
+                    MessageBox.Show($"Insufficient credit limit!\nAvailable: Rs. {availableCredit:N2}\nRequired: Rs. {GrandTotal:N2}", 
+                        "Credit Limit Exceeded", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+            else if (AmountPaid < GrandTotal)
             {
                 MessageBox.Show("Amount paid is less than total!", "Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -463,6 +509,7 @@ namespace MyPOS99.ViewModels
                     AmountPaid = AmountPaid,
                     Change = Change,
                     UserId = currentUser.Id,
+                    CustomerId = SelectedCustomer?.Id,
                     Notes = Notes
                 };
 
@@ -485,11 +532,11 @@ namespace MyPOS99.ViewModels
                     var saleCommand = connection.CreateCommand();
                     saleCommand.Transaction = transaction;
                     saleCommand.CommandText = @"
-                        INSERT INTO Sales (InvoiceNumber, Date, SubTotal, Discount, Tax, Total, PaymentType, AmountPaid, Change, UserId, Notes, CreatedAt)
-                        VALUES (@invoiceNumber, @date, @subTotal, @discount, @tax, @total, @paymentType, @amountPaid, @change, @userId, @notes, @createdAt);
+                        INSERT INTO Sales (InvoiceNumber, Date, SubTotal, Discount, Tax, Total, PaymentType, AmountPaid, Change, UserId, CustomerId, Notes, CreatedAt)
+                        VALUES (@invoiceNumber, @date, @subTotal, @discount, @tax, @total, @paymentType, @amountPaid, @change, @userId, @customerId, @notes, @createdAt);
                         SELECT last_insert_rowid();
                     ";
-                    
+
                     saleCommand.Parameters.AddWithValue("@invoiceNumber", sale.InvoiceNumber);
                     saleCommand.Parameters.AddWithValue("@date", sale.Date.ToString("yyyy-MM-dd HH:mm:ss"));
                     saleCommand.Parameters.AddWithValue("@subTotal", sale.SubTotal);
@@ -500,10 +547,34 @@ namespace MyPOS99.ViewModels
                     saleCommand.Parameters.AddWithValue("@amountPaid", sale.AmountPaid);
                     saleCommand.Parameters.AddWithValue("@change", sale.Change);
                     saleCommand.Parameters.AddWithValue("@userId", sale.UserId);
+                    saleCommand.Parameters.AddWithValue("@customerId", sale.CustomerId.HasValue ? (object)sale.CustomerId.Value : DBNull.Value);
                     saleCommand.Parameters.AddWithValue("@notes", sale.Notes ?? "");
                     saleCommand.Parameters.AddWithValue("@createdAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 
                     var saleId = Convert.ToInt64(await saleCommand.ExecuteScalarAsync());
+
+                    // Update customer totals if customer is selected
+                    if (sale.CustomerId.HasValue && sale.CustomerId.Value > 0)
+                    {
+                        var updateCustomerCommand = connection.CreateCommand();
+                        updateCustomerCommand.Transaction = transaction;
+                        updateCustomerCommand.CommandText = @"
+                            UPDATE Customers 
+                            SET TotalPurchases = TotalPurchases + @total";
+
+                        // For credit customers, also update current credit
+                        if (SelectedCustomer != null && SelectedCustomer.IsCreditCustomer && sale.PaymentType == "Credit")
+                        {
+                            updateCustomerCommand.CommandText += ", CurrentCredit = CurrentCredit + @total";
+                        }
+
+                        updateCustomerCommand.CommandText += " WHERE Id = @customerId";
+
+                        updateCustomerCommand.Parameters.AddWithValue("@total", sale.Total);
+                        updateCustomerCommand.Parameters.AddWithValue("@customerId", sale.CustomerId.Value);
+
+                        await updateCustomerCommand.ExecuteNonQueryAsync();
+                    }
 
                     // Insert sale items and update stock
                     foreach (var item in saleItems)
@@ -802,21 +873,22 @@ namespace MyPOS99.ViewModels
                                 }
                             }
 
-                            private void NewSale()
-                            {
-                                CartItems.Clear();
-                                SearchText = string.Empty;
-                                SearchResults.Clear();
-                                SelectedProduct = null;
-                                SelectedCartItem = null;
-                                AmountPaid = 0;
-                                GlobalDiscount = 0;
-                                CustomerName = "Walk-in Customer";
-                                Notes = string.Empty;
-                                PaymentType = "Cash";
+                                                private void NewSale()
+                                                {
+                                                    CartItems.Clear();
+                                                    SearchText = string.Empty;
+                                                    SearchResults.Clear();
+                                                    SelectedProduct = null;
+                                                    SelectedCartItem = null;
+                                                    AmountPaid = 0;
+                                                    GlobalDiscount = 0;
+                                                    CustomerName = "Walk-in Customer";
+                                                    SelectedCustomer = Customers.FirstOrDefault(c => c.Id == 1);
+                                                    Notes = string.Empty;
+                                                    PaymentType = "Cash";
 
-                                GenerateInvoiceNumber();
-        }
+                                                    GenerateInvoiceNumber();
+                            }
 
         private void GenerateInvoiceNumber()
         {
@@ -896,6 +968,46 @@ namespace MyPOS99.ViewModels
             }
         }
 
+        private async Task LoadCustomersAsync()
+        {
+            try
+            {
+                var customers = await _customerService.GetAllCustomersAsync();
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Customers.Clear();
+                    foreach (var customer in customers)
+                    {
+                        Customers.Add(customer);
+                    }
+
+                    // Set Walk-in Customer as default if it exists
+                    var walkInCustomer = Customers.FirstOrDefault(c => c.Id == 1);
+                    if (walkInCustomer != null)
+                    {
+                        SelectedCustomer = walkInCustomer;
+                    }
+                    else if (Customers.Count > 0)
+                    {
+                        // Fallback to first customer if Walk-in Customer doesn't exist
+                        SelectedCustomer = Customers[0];
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't crash the app
+                System.Diagnostics.Debug.WriteLine($"Error loading customers: {ex.Message}");
+
+                // Show error message only in debug mode
+                #if DEBUG
+                MessageBox.Show($"Error loading customers: {ex.Message}\n\nThe app will continue, but customer selection may not work correctly.", 
+                    "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                #endif
+            }
+        }
+
         private bool CanAddToCart()
         {
             return SelectedProduct != null && SelectedProduct.StockQty > 0;
@@ -908,7 +1020,19 @@ namespace MyPOS99.ViewModels
 
         private bool CanProcessSale()
         {
-            return CartItems.Count > 0 && AmountPaid >= GrandTotal && !IsProcessing;
+            // Basic validation
+            if (CartItems.Count == 0 || IsProcessing)
+                return false;
+
+            // For credit customers, check credit limit
+            if (SelectedCustomer != null && SelectedCustomer.IsCreditCustomer && SelectedCustomer.Id != 1)
+            {
+                var availableCredit = SelectedCustomer.CreditLimit - SelectedCustomer.CurrentCredit;
+                return GrandTotal <= availableCredit;
+            }
+
+            // For cash/card/mobile customers, ensure payment is sufficient
+            return AmountPaid >= GrandTotal;
         }
 
         private bool CanPrintReceipt()
