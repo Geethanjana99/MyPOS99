@@ -1,0 +1,54 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Publish Windows x64 (Self-Contained)
+      run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./release/win-x64
+
+    - name: Zip Release
+      run: Compress-Archive -Path ./release/win-x64/* -DestinationPath ./MyPOS99-${{ github.ref_name }}-win-x64.zip
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ./MyPOS99-${{ github.ref_name }}-win-x64.zip
+        draft: false
+        prerelease: false
+        body: |
+          ## MyPOS99 Release ${{ github.ref_name }}
+          
+          ### ?? Download
+          - Windows 64-bit (Self-Contained): `MyPOS99-${{ github.ref_name }}-win-x64.zip`
+          
+          ### ?? Installation
+          1. Download the zip file
+          2. Extract to your preferred location
+          3. Run `MyPOS99.exe`
+          4. Default login: admin / admin123
+          
+          ### ? Features
+          - Complete POS system with inventory management
+          - Sales processing with multiple payment types
+          - Customer and supplier management
+          - Comprehensive reporting with PDF/Excel export
+          
+          For detailed documentation, see [README.md](https://github.com/Geethanjana99/MyPOS99/blob/master/README.md)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

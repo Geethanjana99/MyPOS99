@@ -4,10 +4,44 @@ A modern WPF-based Point of Sale system built with .NET 10 and SQLite.
 
 ## ?? Quick Start
 
-1. **Clone and open** the project in Visual Studio 2022 or later
-2. **Build** the solution (Ctrl+Shift+B)
-3. **Run** the application (F5)
-4. Default login: Username: `admin`, Password: `admin123`
+### For End Users
+1. **Download** the latest release from [Releases](https://github.com/Geethanjana99/MyPOS99/releases)
+2. **Extract** the zip file
+3. **Run** `MyPOS99.exe`
+4. **Login** with: Username: `admin`, Password: `admin123`
+5. **?? Important**: Change the default password after first login!
+
+### For Developers
+1. **Clone** the repository:
+   ```bash
+   git clone https://github.com/Geethanjana99/MyPOS99.git
+   cd MyPOS99
+   ```
+
+2. **Open** in Visual Studio 2022 or later
+
+3. **Restore** NuGet packages:
+   ```bash
+   dotnet restore
+   ```
+
+4. **Build** the solution:
+   ```bash
+   dotnet build
+   ```
+   Or press `Ctrl+Shift+B` in Visual Studio
+
+5. **Run** the application:
+   ```bash
+   dotnet run
+   ```
+   Or press `F5` in Visual Studio
+
+6. **Run Tests** (optional):
+   ```bash
+   cd MyPOS99.Tests
+   dotnet test
+   ```
 
 ## ?? Project Structure
 
@@ -95,6 +129,27 @@ The application uses **SQLite** with the following schema:
 - **SQLite** - Embedded database (Microsoft.Data.Sqlite)
 - **MVVM Pattern** - Model-View-ViewModel architecture
 - **C# 12** - Latest language features
+- **BCrypt.Net** - Secure password hashing
+- **QuestPDF** - PDF generation
+- **EPPlus** - Excel export functionality
+
+## ?? Testing & CI/CD
+
+### Unit Testing
+- **Framework**: xUnit with FluentAssertions
+- **Mocking**: Moq for dependency injection
+- **Coverage**: Services, ViewModels, and Models
+- **Run Tests**: `dotnet test` in MyPOS99.Tests directory
+
+### Continuous Integration
+- **Platform**: GitHub Actions
+- **Automated Builds**: Every push to master/main/develop
+- **Automated Testing**: All unit tests run on each commit
+- **Release Automation**: Automatic releases on version tags
+
+![Build Status](https://github.com/Geethanjana99/MyPOS99/workflows/Build%20and%20Test/badge.svg)
+
+For detailed testing instructions, see [TESTING.md](TESTING.md)
 
 ## ?? Screenshots
 
@@ -145,14 +200,17 @@ Professional PDF exports for all report types.
 
 ## ?? Documentation
 
-- **Database Schema**: See `Data/DATABASE_SCHEMA.md`
-- **Service Usage**: See `Data/DATABASE_SERVICE_GUIDE.md`
-- **API Reference**: See inline code comments
+- **Database Schema**: See [Data/DATABASE_SCHEMA.md](Data/DATABASE_SCHEMA.md)
+- **Service Usage**: See [Data/DATABASE_SERVICE_GUIDE.md](Data/DATABASE_SERVICE_GUIDE.md)
+- **API Reference**: XML documentation in code
+- **Testing Guide**: See [TESTING.md](TESTING.md)
+- **Performance Metrics**: See [PERFORMANCE.md](PERFORMANCE.md)
+- **Deployment Guide**: See [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## ? Key Features
 
 ### Core Features (Fully Implemented)
-- ? **User Authentication & Authorization** - Role-based access control (Admin, Cashier, Manager)
+- ? **User Authentication & Authorization**
 - ? **Dashboard** - Real-time metrics and quick action buttons
 - ? **Sales/POS Interface** - Complete point-of-sale system with cart management
 - ? **Product Management** - Full CRUD operations with stock tracking
@@ -176,12 +234,17 @@ Professional PDF exports for all report types.
 - ? PDF and Excel export functionality
 - ? Custom WPF value converters
 - ? Comprehensive data validation
+- ? Unit tests with xUnit
+- ? CI/CD with GitHub Actions
+- ? XML documentation for all public APIs
 
 ## ?? Security
 
-- Password hashing placeholder (implement BCrypt recommended)
-- Parameterized SQL queries (SQL injection protection)
-- Role-based access control structure (Admin, Cashier, Manager)
+- ? BCrypt password hashing implemented
+- ? Parameterized SQL queries (SQL injection protection)
+- ? Role-based access control (Admin, Cashier, Manager)
+- ? Secure session management
+- ? Input validation and sanitization
 
 ## ?? Usage Example
 
@@ -211,31 +274,68 @@ var searchResults = await productService.SearchProductsAsync("Laptop");
 
 ## ??? Development Roadmap
 
-### Phase 1 - UI Development (Next)
-- [ ] Login screen
-- [ ] Dashboard
-- [ ] Product management screen
-- [ ] POS/Sales screen
+### ? Phase 1 - Completed
+- ? Login screen with authentication
+- ? Dashboard with real-time metrics
+- ? Product management interface
+- ? POS/Sales interface with cart system
+- ? Customer and Supplier management
+- ? Reports and analytics
 
-### Phase 2 - Features
-- [ ] Barcode scanning
-- [ ] Receipt printing
-- [ ] Inventory alerts
-- [ ] Reports
+### ? Phase 2 - Completed
+- ? Receipt generation (PDF)
+- ? Inventory alerts and low stock notifications
+- ? Comprehensive reporting system
+- ? Data export (PDF & Excel)
+- ? Purchase order management
+- ? Expense tracking
 
-### Phase 3 - Advanced
-- [ ] Multi-user support
-- [ ] Data export
-- [ ] Backup/restore
-- [ ] Cloud sync (optional)
+### ?? Phase 3 - Future Enhancements
+- [ ] Barcode scanner integration
+- [ ] Thermal receipt printer support
+- [ ] Cloud backup integration
+- [ ] Multi-store support
+- [ ] Mobile app companion
+- [ ] Advanced analytics dashboard
+- [ ] Email notifications
+- [ ] SMS integration
 
 ## ?? Contributing
 
-This is a learning/demonstration project. Feel free to:
-- Add new features
-- Improve the UI
-- Add unit tests
-- Enhance documentation
+We welcome contributions! Here's how you can help:
+
+### Ways to Contribute
+- ?? Report bugs via [GitHub Issues](https://github.com/Geethanjana99/MyPOS99/issues)
+- ?? Suggest new features or enhancements
+- ?? Improve documentation
+- ?? Add more unit tests
+- ?? Enhance UI/UX design
+- ?? Fix bugs or implement features
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Write/update tests
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Code Standards
+- Follow existing code style and conventions
+- Add XML documentation for public APIs
+- Write unit tests for new features
+- Ensure all tests pass before submitting PR
+- Update README if adding new features
+
+### Testing Your Changes
+```bash
+# Run all tests
+dotnet test
+
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
+```
 
 ## ?? License
 
