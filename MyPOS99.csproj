@@ -20,8 +20,15 @@
     <PackageReference Include="QuestPDF" Version="2024.12.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Resource Include="Logo.png" />
-  </ItemGroup>
+    <ItemGroup>
+      <Resource Include="Logo.png" />
+    </ItemGroup>
 
-</Project>
+    <ItemGroup>
+      <!-- Exclude test files from main project -->
+      <Compile Remove="MyPOS99.Tests\**" />
+      <EmbeddedResource Remove="MyPOS99.Tests\**" />
+      <None Remove="MyPOS99.Tests\**" />
+    </ItemGroup>
+
+  </Project>
