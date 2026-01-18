@@ -12,7 +12,7 @@ namespace MyPOS99.Views
         public Sale SelectedSale { get; set; }
         public List<SaleItem> SaleItems { get; set; }
         public List<SaleItem> SelectedItemsToReturn { get; private set; }
-        public string ReturnReason { get; private set; }
+        public string ReturnReason { get; private set; } = string.Empty;
         public decimal ReturnAmount { get; private set; }
 
         public ProcessReturnDialog(Sale sale, List<SaleItem> items)

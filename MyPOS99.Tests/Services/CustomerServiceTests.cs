@@ -12,12 +12,12 @@ namespace MyPOS99.Tests.Services
     /// </summary>
     public class CustomerServiceTests
     {
-        private readonly Mock<DatabaseContext> _mockDb;
+        private readonly Mock<DatabaseService> _mockDb;
         private readonly CustomerService _customerService;
 
         public CustomerServiceTests()
         {
-            _mockDb = new Mock<DatabaseContext>();
+            _mockDb = new Mock<DatabaseService>();
             _customerService = new CustomerService(_mockDb.Object);
         }
 
@@ -37,7 +37,7 @@ namespace MyPOS99.Tests.Services
             var result = await _customerService.AddCustomerAsync(customer);
 
             // Assert
-            result.Should().BeGreaterThan(0);
+            result.Should().BeTrue();
         }
 
         [Fact]
